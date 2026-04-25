@@ -1,7 +1,19 @@
+<template>
+  <HelloWorld/>
+</template>
+
+
 <script setup>
 import HelloWorld from './components/HelloWorld.vue'
-</script>
+import {onMounted} from "vue";
+import request from "@/utils/request.jsx";
 
-<template>
-  <HelloWorld />
-</template>
+onMounted(() => {
+  request({
+    method: 'get',
+    url: '/health'
+  }).then(res => {
+    console.log('res', res)
+  })
+})
+</script>
