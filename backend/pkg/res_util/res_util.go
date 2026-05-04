@@ -8,7 +8,7 @@ import (
 
 type Response struct {
 	Code    int    `json:"code"`
-	Message string `json:"msg"`
+	Message string `json:"message"`
 	Data    any    `json:"data"`
 	TraceId string `json:"trace_id"`
 }
@@ -29,9 +29,9 @@ func WithCode(code int) Option {
 	}
 }
 
-func WithMsg(msg string) Option {
+func WithMsg(message string) Option {
 	return func(r *Response) {
-		r.Message = msg
+		r.Message = message
 	}
 }
 

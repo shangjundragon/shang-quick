@@ -196,10 +196,10 @@ func initDatabase() {
 	global_vars.DbConfig = dbw.NewConfig(func(config *dbw.Config) {
 		config.Db = global_vars.Db
 		config.Debug = global_vars.ConfigYml.GetBool("AppDebug")
-		//config.Debug = false
 		config.DriverName = driverName
 		config.LogicDeleteValue = constants.Y
 		config.LogicNotDeleteValue = constants.N
-		//config.PlaceholderConverter = dbw.PostgreSConverter
 	})
+
+	InitDatabase()
 }
