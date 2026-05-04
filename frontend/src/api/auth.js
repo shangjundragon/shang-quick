@@ -7,3 +7,10 @@ export function login(data) {
     data
   })
 }
+
+export function getInfo() {
+  return request({
+    url: '/v1/auth/info',
+    method: 'get'
+  })
+}

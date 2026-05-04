@@ -25,6 +25,7 @@
 import { computed, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import * as Icons from '@vicons/ionicons5'
 
 const props = defineProps({
   collapsed: Boolean
@@ -46,19 +47,44 @@ function generateMenu(menus) {
   const menuMap = {}
   const result = []
 
-  menus.forEach(menu => {
+  // 只保留目录(0)和菜单(1)，过滤按钮(2)
+  const displayMenus = menus.filter(menu => menu.menuType !== 2)
+
+  // 计算完整路径
+  function getFullPath(menu) {
+    if (!menu.path) return ''
+    if (menu.path.startsWith('/')) return menu.path
+    
+    // 查找父菜单
+    const parent = displayMenus.find(m => m.id === menu.parentId)
+    if (parent) {
+      const parentPath = getFullPath(parent)
+      if (parentPath) {
+        return parentPath.replace(/\/$/, '') + '/' + menu.path
+      }
+    }
+    return '/' + menu.path
+  }
+
+  displayMenus.forEach(menu => {
+    const iconName = menu.icon || ''
+    const iconComponent = Icons[iconName]
+    const fullPath = getFullPath(menu)
+    
     menuMap[menu.id] = {
       label: menu.menuName,
-      key: menu.path,
-      icon: () => h('i', { class: menu.icon }),
-      children: []
+      key: fullPath,
+      icon: iconComponent ? () => h(iconComponent) : undefined
     }
   })
 
-  menus.forEach(menu => {
+  displayMenus.forEach(menu => {
     if (menu.parentId === 0) {
       result.push(menuMap[menu.id])
     } else if (menuMap[menu.parentId]) {
+      if (!menuMap[menu.parentId].children) {
+        menuMap[menu.parentId].children = []
+      }
       menuMap[menu.parentId].children.push(menuMap[menu.id])
     }
   })
@@ -67,7 +93,9 @@ function generateMenu(menus) {
 }
 
 function handleMenuSelect(key) {
-  router.push(key)
+  if (key) {
+    router.push(key)
+  }
 }
 </script>
 

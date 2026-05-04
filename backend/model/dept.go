@@ -1,17 +1,17 @@
 package model
 
 type SysDept struct {
-	Id         int64   `dbw:"primaryKey"`
-	ParentId   int64   `dbw:"column:parent_id;default:0"`
-	DeptName   string  `dbw:"column:dept_name"`
-	OrderNum   int     `dbw:"column:order_num;default:0"`
-	Leader     *string `dbw:"column:leader"`
-	Phone      *string `dbw:"column:phone"`
-	Email      *string `dbw:"column:email"`
-	Status     int     `dbw:"column:status;default:1"`
-	DelFlag    string  `dbw:"column:del_flag;tableLogic"`
-	CreateTime int64   `dbw:"column:create_time;autoCreateTime:milli"`
-	UpdateTime int64   `dbw:"column:update_time;autoUpdateTime:milli"`
+	Id         int64   `dbw:"primaryKey" json:"id"`
+	ParentId   int64   `dbw:"column:parent_id;default:0" json:"parentId"`
+	DeptName   string  `dbw:"column:dept_name" json:"deptName"`
+	OrderNum   int     `dbw:"column:order_num;default:0" json:"orderNum"`
+	Leader     *string `dbw:"column:leader" json:"leader"`
+	Phone      *string `dbw:"column:phone" json:"phone"`
+	Email      *string `dbw:"column:email" json:"email"`
+	Status     int     `dbw:"column:status;default:1" json:"status"`
+	DelFlag    string  `dbw:"column:del_flag;tableLogic" json:"delFlag"`
+	CreateTime int64   `dbw:"column:create_time;autoCreateTime:milli" json:"createTime"`
+	UpdateTime int64   `dbw:"column:update_time;autoUpdateTime:milli" json:"updateTime"`
 }
 
 func (SysDept) TableName() string {

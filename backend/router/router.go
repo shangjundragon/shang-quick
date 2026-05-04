@@ -19,6 +19,9 @@ func SetupRouter() *gin.Engine {
 
 		authorized := api.Group("", middleware.JWTAuth())
 		{
+			authorized.GET("/auth/info", controller.AuthInfo)
+		}
+		{
 			authorized.GET("/user/list", middleware.OperLog("用户管理", 4), middleware.Permission("user:list"), controller.UserList)
 			authorized.POST("/user/add", middleware.OperLog("用户管理", 1), middleware.Permission("user:add"), controller.UserAdd)
 			authorized.POST("/user/edit", middleware.OperLog("用户管理", 2), middleware.Permission("user:edit"), controller.UserEdit)

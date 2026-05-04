@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"backend/pkg/constants"
 	"backend/pkg/jwt"
 	"backend/pkg/password"
 	"backend/pkg/req_util"
@@ -58,6 +59,31 @@ func AuthLogin(c *gin.Context) {
 
 	res_util.Success(c, res_util.WithData(gin.H{
 		"token":       token,
+		"userInfo":    user,
+		"roleCode":    roleCode,
+		"permissions": perms,
+		"menus":       menus,
+	}))
+}
+
+func AuthInfo(c *gin.Context) {
+	userId, _ := c.Get(constants.ContextUserIDKey)
+	user, err := service.UserService.GetById(userId.(int64))
+	if err != nil || user == nil {
+		res_util.Fail(c, res_util.WithMsg("用户不存在"))
+		return
+	}
+
+	roles, _ := service.UserService.GetUserRoles(user.Id)
+	roleCode := ""
+	if len(roles) > 0 {
+		roleCode = roles[0].RoleCode
+	}
+
+	perms, _ := service.UserService.GetUserPermissions(user.Id)
+	menus, _ := service.UserService.GetUserMenus(user.Id)
+
+	res_util.Success(c, res_util.WithData(gin.H{
 		"userInfo":    user,
 		"roleCode":    roleCode,
 		"permissions": perms,

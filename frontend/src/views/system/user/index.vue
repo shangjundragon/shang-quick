@@ -9,10 +9,7 @@
           <n-input v-model:value="queryParams.phone" placeholder="请输入手机号" clearable />
         </n-form-item>
         <n-form-item label="状态">
-          <n-select v-model:value="queryParams.status" placeholder="请选择状态" clearable style="width: 120px">
-            <n-option :value="1" label="启用" />
-            <n-option :value="0" label="禁用" />
-          </n-select>
+          <n-select v-model:value="queryParams.status" placeholder="请选择状态" clearable style="width: 120px" :options="statusOptions" />
         </n-form-item>
         <n-form-item>
           <n-button type="primary" @click="handleQuery">搜索</n-button>
@@ -71,6 +68,11 @@
 import { ref, onMounted, h } from 'vue'
 import { NButton, NSpace } from 'naive-ui'
 import { getUserList, addUser, updateUser, changeUserStatus, resetUserPwd, deleteUser } from '@/api/user'
+
+const statusOptions = [
+  { label: '启用', value: 1 },
+  { label: '禁用', value: 0 }
+]
 
 const loading = ref(false)
 const tableData = ref([])

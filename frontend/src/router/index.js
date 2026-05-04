@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import { getInfo } from '@/api/auth'
 
 const routes = [
   {
@@ -96,6 +97,20 @@ router.beforeEach(async (to, from, next) => {
   if (!userStore.token) {
     next('/login')
     return
+  }
+
+  // 刷新页面后重新获取用户信息
+  if (userStore.menus.length === 0) {
+    try {
+      const res = await getInfo()
+      userStore.setUserInfo(res.userInfo)
+      userStore.setPermissions(res.permissions)
+      userStore.setMenus(res.menus)
+    } catch (error) {
+      userStore.logout()
+      next('/login')
+      return
+    }
   }
 
   next()
