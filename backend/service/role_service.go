@@ -3,6 +3,7 @@ package service
 import (
 	"backend/model"
 	"backend/pkg/global_vars"
+	"context"
 	"errors"
 
 	"github.com/shangjundragon/dbw"
@@ -12,8 +13,8 @@ var RoleService = new(roleService)
 
 type roleService struct{}
 
-func (s *roleService) List(pageNum, pageSize int, roleName string) ([]model.SysRole, int64, error) {
-	wrapper := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig))
+func (s *roleService) List(ctx context.Context, pageNum, pageSize int, roleName string) ([]model.SysRole, int64, error) {
+	wrapper := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx))
 	if roleName != "" {
 		wrapper = wrapper.Like("role_name", "%"+roleName+"%")
 	}
@@ -24,41 +25,41 @@ func (s *roleService) List(pageNum, pageSize int, roleName string) ([]model.SysR
 	return list, total, nil
 }
 
-func (s *roleService) Add(role *model.SysRole) error {
-	_, err := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig)).Insert(role)
+func (s *roleService) Add(ctx context.Context, role *model.SysRole) error {
+	_, err := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).Insert(role)
 	return err
 }
 
-func (s *roleService) Update(role *model.SysRole) error {
-	_, err := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig)).UpdateById(role)
+func (s *roleService) Update(ctx context.Context, role *model.SysRole) error {
+	_, err := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).UpdateById(role)
 	return err
 }
 
-func (s *roleService) Delete(id int64) error {
-	userRoles, _ := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig)).
+func (s *roleService) Delete(ctx context.Context, id int64) error {
+	userRoles, _ := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("role_id", id).
 		SelectList()
 	if len(userRoles) > 0 {
 		return errors.New("角色下存在用户，无法删除")
 	}
 
-	_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig)).
+	_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("role_id", id).
 		Delete()
 	if err != nil {
 		return err
 	}
 
-	_, err = dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig)).DeleteById(id)
+	_, err = dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).DeleteById(id)
 	return err
 }
 
-func (s *roleService) GetById(id int64) (*model.SysRole, error) {
-	return dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig)).SelectById(id)
+func (s *roleService) GetById(ctx context.Context, id int64) (*model.SysRole, error) {
+	return dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).SelectById(id)
 }
 
-func (s *roleService) GetMenuIds(roleId int64) ([]int64, error) {
-	roleMenus, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig)).
+func (s *roleService) GetMenuIds(ctx context.Context, roleId int64) ([]int64, error) {
+	roleMenus, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("role_id", roleId).
 		SelectList()
 	if err != nil {
@@ -72,8 +73,8 @@ func (s *roleService) GetMenuIds(roleId int64) ([]int64, error) {
 	return menuIds, nil
 }
 
-func (s *roleService) AssignMenu(roleId int64, menuIds []int64) error {
-	_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig)).
+func (s *roleService) AssignMenu(ctx context.Context, roleId int64, menuIds []int64) error {
+	_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("role_id", roleId).
 		Delete()
 	if err != nil {
@@ -81,7 +82,7 @@ func (s *roleService) AssignMenu(roleId int64, menuIds []int64) error {
 	}
 
 	for _, menuId := range menuIds {
-		_, err = dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig)).Insert(
+		_, err = dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).Insert(
 			&model.SysRoleMenu{
 				RoleId: roleId,
 				MenuId: menuId,

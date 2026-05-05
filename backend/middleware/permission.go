@@ -22,7 +22,7 @@ func Permission(perm string) gin.HandlerFunc {
 			return
 		}
 
-		hasPerm, err := service.UserService.CheckPermission(userID.(int64), perm)
+		hasPerm, err := service.UserService.CheckPermission(c, userID.(int64), perm)
 		if err != nil || !hasPerm {
 			res_util.Fail(c, res_util.WithCode(403), res_util.WithMsg("无权限操作"))
 			return

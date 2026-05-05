@@ -10,8 +10,7 @@ var (
 	ContextUserIDKey   = "user_id"
 	ContextUsernameKey = "username"
 	ContextRoleCodeKey = "role_code"
-	JWTSecret          = "shang-quick-admin-secret-key-2026"
-	JWTExpireHours     = 24
+	AdminUserId        = 1
 
 	MenuTypeDir  = 0
 	MenuTypeMenu = 1

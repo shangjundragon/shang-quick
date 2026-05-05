@@ -13,7 +13,7 @@ import (
 
 func MenuList(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
-	list, err := service.MenuService.List()
+	list, err := service.MenuService.List(c)
 	if err != nil {
 		traceLogger.Error("查询菜单列表失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))
@@ -60,7 +60,7 @@ func MenuAdd(c *gin.Context) {
 		Status:    1,
 	}
 
-	err = service.MenuService.Add(menu)
+	err = service.MenuService.Add(c, menu)
 	if err != nil {
 		traceLogger.Error("新增菜单失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("新增失败"))
@@ -109,7 +109,7 @@ func MenuEdit(c *gin.Context) {
 		IsVisible: req.IsVisible,
 	}
 
-	err = service.MenuService.Update(menu)
+	err = service.MenuService.Update(c, menu)
 	if err != nil {
 		traceLogger.Error("编辑菜单失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("编辑失败"))
@@ -132,7 +132,7 @@ func MenuDelete(c *gin.Context) {
 		return
 	}
 
-	err = service.MenuService.Delete(req.Id)
+	err = service.MenuService.Delete(c, req.Id)
 	if err != nil {
 		traceLogger.Error("删除菜单失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("删除失败"))

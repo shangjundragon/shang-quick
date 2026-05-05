@@ -16,4 +16,11 @@ Db:
   DriverName: "sqlite"
   Dsn: "data.db"
 
+Jwt:
+  Secret: "shang-quick-admin-secret-key-2026"
+  ExpireHours: 24
+
+Cache:
+  UseRedis: false
+
 

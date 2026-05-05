@@ -3,6 +3,7 @@ package service
 import (
 	"backend/model"
 	"backend/pkg/global_vars"
+	"context"
 	"errors"
 
 	"github.com/shangjundragon/dbw"
@@ -12,8 +13,8 @@ var UserService = new(userService)
 
 type userService struct{}
 
-func (s *userService) CheckPermission(userID int64, perm string) (bool, error) {
-	userRoles, err := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig)).
+func (s *userService) CheckPermission(ctx context.Context, userID int64, perm string) (bool, error) {
+	userRoles, err := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("user_id", userID).
 		SelectList()
 	if err != nil {
@@ -29,7 +30,7 @@ func (s *userService) CheckPermission(userID int64, perm string) (bool, error) {
 		roleIds[i] = ur.RoleId
 	}
 
-	roleMenus, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig)).
+	roleMenus, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		In("role_id", roleIds...).
 		SelectList()
 	if err != nil {
@@ -45,7 +46,7 @@ func (s *userService) CheckPermission(userID int64, perm string) (bool, error) {
 		menuIds[i] = rm.MenuId
 	}
 
-	menus, err := dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig)).
+	menus, err := dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		In("id", menuIds...).
 		Eq("menu_type", 2).
 		SelectList()
@@ -62,8 +63,8 @@ func (s *userService) CheckPermission(userID int64, perm string) (bool, error) {
 	return false, nil
 }
 
-func (s *userService) GetUserRoles(userID int64) ([]model.SysRole, error) {
-	userRoles, err := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig)).
+func (s *userService) GetUserRoles(ctx context.Context, userID int64) ([]model.SysRole, error) {
+	userRoles, err := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("user_id", userID).
 		SelectList()
 	if err != nil {
@@ -79,7 +80,7 @@ func (s *userService) GetUserRoles(userID int64) ([]model.SysRole, error) {
 		roleIds[i] = ur.RoleId
 	}
 
-	roles, err := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig)).
+	roles, err := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		In("id", roleIds...).
 		SelectList()
 	if err != nil {
@@ -89,15 +90,15 @@ func (s *userService) GetUserRoles(userID int64) ([]model.SysRole, error) {
 	return roles, nil
 }
 
-func (s *userService) GetUserPermissions(userID int64) ([]string, error) {
-	roles, err := s.GetUserRoles(userID)
+func (s *userService) GetUserPermissions(ctx context.Context, userID int64) ([]string, error) {
+	roles, err := s.GetUserRoles(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, role := range roles {
 		if role.RoleCode == "admin" {
-			menus, _ := dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig)).
+			menus, _ := dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 				Eq("menu_type", 2).
 				SelectList()
 			perms := make([]string, 0, len(menus))
@@ -110,7 +111,7 @@ func (s *userService) GetUserPermissions(userID int64) ([]string, error) {
 		}
 	}
 
-	userRoles, _ := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig)).
+	userRoles, _ := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("user_id", userID).
 		SelectList()
 	if len(userRoles) == 0 {
@@ -122,7 +123,7 @@ func (s *userService) GetUserPermissions(userID int64) ([]string, error) {
 		roleIds[i] = ur.RoleId
 	}
 
-	roleMenus, _ := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig)).
+	roleMenus, _ := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		In("role_id", roleIds...).
 		SelectList()
 	if len(roleMenus) == 0 {
@@ -134,7 +135,7 @@ func (s *userService) GetUserPermissions(userID int64) ([]string, error) {
 		menuIds[i] = rm.MenuId
 	}
 
-	menus, _ := dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig)).
+	menus, _ := dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		In("id", menuIds...).
 		Eq("menu_type", 2).
 		SelectList()
@@ -149,8 +150,8 @@ func (s *userService) GetUserPermissions(userID int64) ([]string, error) {
 	return perms, nil
 }
 
-func (s *userService) GetUserMenus(userID int64) ([]model.SysMenu, error) {
-	roles, err := s.GetUserRoles(userID)
+func (s *userService) GetUserMenus(ctx context.Context, userID int64) ([]model.SysMenu, error) {
+	roles, err := s.GetUserRoles(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -165,10 +166,11 @@ func (s *userService) GetUserMenus(userID int64) ([]model.SysMenu, error) {
 
 	var menus []model.SysMenu
 	if isAdmin {
-		menus, err = dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig)).
+		menus, err = dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
+			OrderBy("order_num").
 			SelectList()
 	} else {
-		userRoles, _ := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig)).
+		userRoles, _ := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 			Eq("user_id", userID).
 			SelectList()
 		if len(userRoles) == 0 {
@@ -180,7 +182,7 @@ func (s *userService) GetUserMenus(userID int64) ([]model.SysMenu, error) {
 			roleIds[i] = ur.RoleId
 		}
 
-		roleMenus, _ := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig)).
+		roleMenus, _ := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 			In("role_id", roleIds...).
 			SelectList()
 		if len(roleMenus) == 0 {
@@ -192,16 +194,17 @@ func (s *userService) GetUserMenus(userID int64) ([]model.SysMenu, error) {
 			menuIds[i] = rm.MenuId
 		}
 
-		menus, _ = dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig)).
+		menus, _ = dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 			In("id", menuIds...).
+			OrderBy("order_num").
 			SelectList()
 	}
 
 	return menus, nil
 }
 
-func (s *userService) GetByUsername(username string) (*model.SysUser, error) {
-	user, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig)).
+func (s *userService) GetByUsername(ctx context.Context, username string) (*model.SysUser, error) {
+	user, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("username", username).
 		FindOne()
 	if err != nil {
@@ -213,8 +216,8 @@ func (s *userService) GetByUsername(username string) (*model.SysUser, error) {
 	return user, nil
 }
 
-func (s *userService) List(pageNum, pageSize int, username, phone string, status *int, deptId *int64) ([]model.SysUser, int64, error) {
-	wrapper := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig))
+func (s *userService) List(ctx context.Context, pageNum, pageSize int, username, phone string, status *int, deptId *int64) ([]model.SysUser, int64, error) {
+	wrapper := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx))
 
 	if username != "" {
 		wrapper = wrapper.Like("username", "%"+username+"%")
@@ -231,27 +234,44 @@ func (s *userService) List(pageNum, pageSize int, username, phone string, status
 
 	list, total, err := wrapper.OrderByDesc("create_time").SelectPage(pageNum, pageSize)
 	if err != nil {
-		
 		return nil, 0, err
 	}
 	return list, total, nil
 }
 
-func (s *userService) Add(user *model.SysUser) error {
-	_, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig)).Insert(user)
+func (s *userService) Add(ctx context.Context, user *model.SysUser) error {
+	_, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).Insert(user)
 	return err
 }
 
-func (s *userService) Update(user *model.SysUser) error {
-	_, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig)).UpdateById(user)
+func (s *userService) AddWithRoles(ctx context.Context, user *model.SysUser, roleIds []int64) error {
+	_, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).Insert(user)
+	if err != nil {
+		return err
+	}
+
+	for _, roleId := range roleIds {
+		_, err = dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).Insert(
+			&model.SysUserRole{UserId: user.Id, RoleId: roleId})
+		if err != nil {
+			dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).DeleteById(user.Id)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *userService) Update(ctx context.Context, user *model.SysUser) error {
+	_, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).UpdateById(user)
 	return err
 }
 
-func (s *userService) Delete(id int64) error {
-	_, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig)).DeleteById(id)
+func (s *userService) Delete(ctx context.Context, id int64) error {
+	_, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).DeleteById(id)
 	return err
 }
 
-func (s *userService) GetById(id int64) (*model.SysUser, error) {
-	return dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig)).SelectById(id)
+func (s *userService) GetById(ctx context.Context, id int64) (*model.SysUser, error) {
+	return dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).SelectById(id)
 }

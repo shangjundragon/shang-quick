@@ -25,6 +25,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
+import { updateProfile } from '@/api/profile'
 
 const userStore = useUserStore()
 const userInfo = ref({})
@@ -33,7 +34,13 @@ onMounted(() => {
   userInfo.value = { ...userStore.userInfo }
 })
 
-function handleUpdate() {
-  window.$message.success('保存成功')
+async function handleUpdate() {
+  try {
+    const res = await updateProfile(userInfo.value)
+    userStore.setUserInfo(res)
+    window.$message.success('保存成功')
+  } catch (error) {
+    window.$message.error('保存失败')
+  }
 }
 </script>

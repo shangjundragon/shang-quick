@@ -25,7 +25,7 @@ func AuthLogin(c *gin.Context) {
 		return
 	}
 
-	user, err := service.UserService.GetByUsername(req.Username)
+	user, err := service.UserService.GetByUsername(c, req.Username)
 	if err != nil || user == nil {
 		traceLogger.Warn("用户不存在", zap.Any("req", req), zap.Any("err", err), zap.Any("user", user))
 		res_util.Fail(c, res_util.WithMsg("用户不存在"))
@@ -42,7 +42,7 @@ func AuthLogin(c *gin.Context) {
 		return
 	}
 
-	roles, _ := service.UserService.GetUserRoles(user.Id)
+	roles, _ := service.UserService.GetUserRoles(c, user.Id)
 	roleCode := ""
 	if len(roles) > 0 {
 		roleCode = roles[0].RoleCode
@@ -54,8 +54,8 @@ func AuthLogin(c *gin.Context) {
 		return
 	}
 
-	perms, _ := service.UserService.GetUserPermissions(user.Id)
-	menus, _ := service.UserService.GetUserMenus(user.Id)
+	perms, _ := service.UserService.GetUserPermissions(c, user.Id)
+	menus, _ := service.UserService.GetUserMenus(c, user.Id)
 
 	res_util.Success(c, res_util.WithData(gin.H{
 		"token":       token,
@@ -69,21 +69,21 @@ func AuthLogin(c *gin.Context) {
 func AuthInfo(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	userId, _ := c.Get(constants.ContextUserIDKey)
-	user, err := service.UserService.GetById(userId.(int64))
+	user, err := service.UserService.GetById(c, userId.(int64))
 	if err != nil || user == nil {
 		traceLogger.Error("获取用户信息失败", zap.Any("userId", userId), zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("用户不存在"))
 		return
 	}
 
-	roles, _ := service.UserService.GetUserRoles(user.Id)
+	roles, _ := service.UserService.GetUserRoles(c, user.Id)
 	roleCode := ""
 	if len(roles) > 0 {
 		roleCode = roles[0].RoleCode
 	}
 
-	perms, _ := service.UserService.GetUserPermissions(user.Id)
-	menus, _ := service.UserService.GetUserMenus(user.Id)
+	perms, _ := service.UserService.GetUserPermissions(c, user.Id)
+	menus, _ := service.UserService.GetUserMenus(c, user.Id)
 
 	res_util.Success(c, res_util.WithData(gin.H{
 		"userInfo":    user,

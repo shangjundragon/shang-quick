@@ -1,7 +1,7 @@
 package jwt
 
 import (
-	"backend/pkg/constants"
+	"backend/pkg/global_vars"
 	"errors"
 	"time"
 
@@ -15,23 +15,39 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+func getSecret() string {
+	secret := global_vars.ConfigYml.GetString("Jwt.Secret")
+	if secret == "" {
+		return "shang-quick-admin-secret-key-2026"
+	}
+	return secret
+}
+
+func getExpireHours() int {
+	hours := global_vars.ConfigYml.GetInt("Jwt.ExpireHours")
+	if hours <= 0 {
+		return 24
+	}
+	return hours
+}
+
 func GenerateToken(userID int64, username, roleCode string) (string, error) {
 	claims := Claims{
 		UserID:   userID,
 		Username: username,
 		RoleCode: roleCode,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Duration(constants.JWTExpireHours) * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Duration(getExpireHours()) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(constants.JWTSecret))
+	return token.SignedString([]byte(getSecret()))
 }
 
 func ParseToken(tokenStr string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(constants.JWTSecret), nil
+		return []byte(getSecret()), nil
 	})
 	if err != nil {
 		return nil, err

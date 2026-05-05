@@ -174,7 +174,7 @@ function handleAdd() {
   modalTitle.value = '新增菜单'
   form.value = {
     id: null,
-    parentId: 0,
+  parentId: '0',
     menuName: '',
     menuType: 0,
     icon: '',

@@ -74,6 +74,7 @@ import { ref, onMounted, h } from 'vue'
 import { NButton, NSpace, NPopconfirm } from 'naive-ui'
 import { getRoleList, addRole, updateRole, deleteRole, getRoleMenuIds, assignRoleMenu } from '@/api/role'
 import { getMenuList } from '@/api/menu'
+import { formatTimestamp } from '@/utils/format'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -97,7 +98,7 @@ const columns = [
   { title: '状态', key: 'status', render(row) {
     return row.status === 1 ? '启用' : '禁用'
   }},
-  { title: '创建时间', key: 'createTime' },
+  { title: '创建时间', key: 'createTime', render(row) { return formatTimestamp(row.createTime) } },
   { title: '操作', key: 'actions', render(row) {
     return h(NSpace, null, {
       default: () => [

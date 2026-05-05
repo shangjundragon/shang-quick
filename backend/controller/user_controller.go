@@ -33,7 +33,7 @@ func UserList(c *gin.Context) {
 		return
 	}
 
-	list, total, err := service.UserService.List(req.PageNum, req.PageSize, req.Username, req.Phone, req.Status, req.DeptId)
+	list, total, err := service.UserService.List(c, req.PageNum, req.PageSize, req.Username, req.Phone, req.Status, req.DeptId)
 	if err != nil {
 		traceLogger.Error("查询失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))
@@ -48,13 +48,13 @@ func UserList(c *gin.Context) {
 
 	voList := make([]UserVO, len(list))
 	for i, user := range list {
-		dept, _ := service.DeptService.GetById(user.DeptId)
+		dept, _ := service.DeptService.GetById(c, user.DeptId)
 		deptName := ""
 		if dept != nil {
 			deptName = dept.DeptName
 		}
 
-		roles, _ := service.UserService.GetUserRoles(user.Id)
+		roles, _ := service.UserService.GetUserRoles(c, user.Id)
 		roleNames := make([]string, 0, len(roles))
 		for _, role := range roles {
 			roleNames = append(roleNames, role.RoleName)
@@ -93,6 +93,11 @@ func UserAdd(c *gin.Context) {
 		return
 	}
 
+	if err := password.ValidatePassword(req.Password); err != nil {
+		res_util.Fail(c, res_util.WithMsg(err.Error()))
+		return
+	}
+
 	hashedPwd, _ := password.Hash(req.Password)
 	user := &model.SysUser{
 		Username: req.Username,
@@ -107,16 +112,11 @@ func UserAdd(c *gin.Context) {
 	createBy, _ := c.Get(constants.ContextUserIDKey)
 	user.CreateBy = createBy.(int64)
 
-	err = service.UserService.Add(user)
+	err = service.UserService.AddWithRoles(c, user, req.RoleIds)
 	if err != nil {
 		traceLogger.Error("新增失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("新增失败"))
 		return
-	}
-
-	for _, roleId := range req.RoleIds {
-		dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig)).Insert(
-			&model.SysUserRole{UserId: user.Id, RoleId: roleId})
 	}
 
 	res_util.Success(c)
@@ -153,16 +153,16 @@ func UserEdit(c *gin.Context) {
 	updateBy, _ := c.Get(constants.ContextUserIDKey)
 	user.UpdateBy = updateBy.(int64)
 
-	err = service.UserService.Update(user)
+	err = service.UserService.Update(c, user)
 	if err != nil {
 		traceLogger.Error("编辑失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("编辑失败"))
 		return
 	}
 
-	dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig)).Eq("user_id", req.Id).Delete()
+	dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(c)).Eq("user_id", req.Id).Delete()
 	for _, roleId := range req.RoleIds {
-		dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig)).Insert(
+		dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(c)).Insert(
 			&model.SysUserRole{UserId: req.Id, RoleId: roleId})
 	}
 
@@ -190,7 +190,7 @@ func UserChangeStatus(c *gin.Context) {
 	updateBy, _ := c.Get(constants.ContextUserIDKey)
 	user.UpdateBy = updateBy.(int64)
 
-	err = service.UserService.Update(user)
+	err = service.UserService.Update(c, user)
 	if err != nil {
 		traceLogger.Error("操作失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("操作失败"))
@@ -219,7 +219,7 @@ func UserResetPwd(c *gin.Context) {
 		Password: hashedPwd,
 	}
 
-	err = service.UserService.Update(user)
+	err = service.UserService.Update(c, user)
 	if err != nil {
 		traceLogger.Error("重置失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("重置失败"))
@@ -242,7 +242,7 @@ func UserDelete(c *gin.Context) {
 		return
 	}
 
-	err = service.UserService.Delete(req.Id)
+	err = service.UserService.Delete(c, req.Id)
 	if err != nil {
 		traceLogger.Error("删除失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("删除失败"))
@@ -263,7 +263,7 @@ func UserRoleIds(c *gin.Context) {
 	var userId int64
 	fmt.Sscanf(userIdStr, "%d", &userId)
 
-	roles, err := service.UserService.GetUserRoles(userId)
+	roles, err := service.UserService.GetUserRoles(c, userId)
 	if err != nil {
 		traceLogger.Error("查询失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))

@@ -13,7 +13,7 @@ import (
 
 func DeptList(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
-	list, err := service.DeptService.List()
+	list, err := service.DeptService.List(c)
 	if err != nil {
 		traceLogger.Error("查询部门列表失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))
@@ -50,7 +50,7 @@ func DeptAdd(c *gin.Context) {
 		Status:   1,
 	}
 
-	err = service.DeptService.Add(dept)
+	err = service.DeptService.Add(c, dept)
 	if err != nil {
 		traceLogger.Error("新增部门失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("新增失败"))
@@ -89,7 +89,7 @@ func DeptEdit(c *gin.Context) {
 		Email:    utils.StrPtr(req.Email),
 	}
 
-	err = service.DeptService.Update(dept)
+	err = service.DeptService.Update(c, dept)
 	if err != nil {
 		traceLogger.Error("编辑部门失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("编辑失败"))
@@ -112,7 +112,7 @@ func DeptDelete(c *gin.Context) {
 		return
 	}
 
-	err = service.DeptService.Delete(req.Id)
+	err = service.DeptService.Delete(c, req.Id)
 	if err != nil {
 		traceLogger.Error("删除部门失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg(err.Error()))

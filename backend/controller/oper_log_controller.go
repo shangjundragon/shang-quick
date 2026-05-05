@@ -25,7 +25,7 @@ func OperLogList(c *gin.Context) {
 		return
 	}
 
-	list, total, err := service.OperLogService.List(req.PageNum, req.PageSize, req.Title, req.OperName)
+	list, total, err := service.OperLogService.List(c, req.PageNum, req.PageSize, req.Title, req.OperName)
 	if err != nil {
 		traceLogger.Error("查询操作日志失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))

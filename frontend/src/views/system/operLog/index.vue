@@ -28,6 +28,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getOperLogList } from '@/api/operLog'
+import { formatTimestamp } from '@/utils/format'
 
 const loading = ref(false)
 const tableData = ref([])
@@ -51,7 +52,7 @@ const columns = [
   { title: '请求URL', key: 'requestUrl' },
   { title: '操作人员', key: 'operName' },
   { title: '操作IP', key: 'operIp' },
-  { title: '操作时间', key: 'operTime' },
+  { title: '操作时间', key: 'operTime', render(row) { return formatTimestamp(row.operTime) } },
   { title: '状态', key: 'status', render(row) {
     return row.status === 1 ? '成功' : '失败'
   }}

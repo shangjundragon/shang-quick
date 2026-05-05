@@ -16,7 +16,7 @@ import (
 func ProfileGet(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	userID, _ := c.Get(constants.ContextUserIDKey)
-	user, err := service.UserService.GetById(userID.(int64))
+	user, err := service.UserService.GetById(c, userID.(int64))
 	if err != nil {
 		traceLogger.Error("查询个人信息失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))
@@ -48,14 +48,15 @@ func ProfileUpdate(c *gin.Context) {
 		Email:    utils.StrPtr(req.Email),
 	}
 
-	err = service.UserService.Update(user)
+	err = service.UserService.Update(c, user)
 	if err != nil {
 		traceLogger.Error("更新个人信息失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("更新失败"))
 		return
 	}
 
-	res_util.Success(c)
+	updatedUser, _ := service.UserService.GetById(c, userID.(int64))
+	res_util.Success(c, res_util.WithData(updatedUser))
 }
 
 func ProfileUpdatePwd(c *gin.Context) {
@@ -72,8 +73,13 @@ func ProfileUpdatePwd(c *gin.Context) {
 		return
 	}
 
+	if err := password.ValidatePassword(req.NewPassword); err != nil {
+		res_util.Fail(c, res_util.WithMsg(err.Error()))
+		return
+	}
+
 	userID, _ := c.Get(constants.ContextUserIDKey)
-	user, err := service.UserService.GetById(userID.(int64))
+	user, err := service.UserService.GetById(c, userID.(int64))
 	if err != nil {
 		traceLogger.Error("获取用户失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("用户不存在"))
@@ -91,7 +97,7 @@ func ProfileUpdatePwd(c *gin.Context) {
 		Password: hashedPwd,
 	}
 
-	err = service.UserService.Update(updateUser)
+	err = service.UserService.Update(c, updateUser)
 	if err != nil {
 		traceLogger.Error("修改密码失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("修改失败"))

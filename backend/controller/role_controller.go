@@ -27,7 +27,7 @@ func RoleList(c *gin.Context) {
 		return
 	}
 
-	list, total, err := service.RoleService.List(req.PageNum, req.PageSize, req.RoleName)
+	list, total, err := service.RoleService.List(c, req.PageNum, req.PageSize, req.RoleName)
 	if err != nil {
 		traceLogger.Error("查询角色列表失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))
@@ -63,7 +63,7 @@ func RoleAdd(c *gin.Context) {
 		Status:   req.Status,
 	}
 
-	err = service.RoleService.Add(role)
+	err = service.RoleService.Add(c, role)
 	if err != nil {
 		traceLogger.Error("新增角色失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("新增失败"))
@@ -98,7 +98,7 @@ func RoleEdit(c *gin.Context) {
 		Status:   req.Status,
 	}
 
-	err = service.RoleService.Update(role)
+	err = service.RoleService.Update(c, role)
 	if err != nil {
 		traceLogger.Error("编辑角色失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("编辑失败"))
@@ -121,7 +121,7 @@ func RoleDelete(c *gin.Context) {
 		return
 	}
 
-	err = service.RoleService.Delete(req.Id)
+	err = service.RoleService.Delete(c, req.Id)
 	if err != nil {
 		traceLogger.Error("删除角色失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg(err.Error()))
@@ -143,7 +143,7 @@ func RoleMenuIds(c *gin.Context) {
 	var roleId int64
 	fmt.Sscanf(roleIdStr, "%d", &roleId)
 
-	menuIds, err := service.RoleService.GetMenuIds(roleId)
+	menuIds, err := service.RoleService.GetMenuIds(c, roleId)
 	if err != nil {
 		traceLogger.Error("查询角色菜单失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))
@@ -172,7 +172,7 @@ func RoleAssignMenu(c *gin.Context) {
 		return
 	}
 
-	err = service.RoleService.AssignMenu(req.RoleId, req.MenuIds)
+	err = service.RoleService.AssignMenu(c, req.RoleId, req.MenuIds)
 	if err != nil {
 		traceLogger.Error("分配菜单失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("分配失败"))

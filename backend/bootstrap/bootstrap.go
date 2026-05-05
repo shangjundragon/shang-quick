@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"backend/pkg/cache"
 	"backend/pkg/constants"
 	"backend/pkg/global_vars"
 	"backend/pkg/logger"
@@ -30,7 +31,9 @@ func Bootstrap() {
 	loadConfigFile()
 	// 4.初始化日志
 	logger.InitLogger()
-	// 5.初始化数据库
+	// 5.初始化缓存
+	cache.InitCache()
+	// 6.初始化数据库
 	initDatabase()
 }
 
@@ -105,7 +108,7 @@ func initDatabase() {
 			s = strings.ReplaceAll(s, "'", "''")          // 单引号转义
 			s = strings.ReplaceAll(s, "\\", "\\\\")       // 反斜杠转义
 			s = strings.ReplaceAll(s, "\n", "\\n")        // 换行符
-			s = strings.ReplaceAll(s, "\r", "\\res_util") // 回车符
+			s = strings.ReplaceAll(s, "\r", "\\r")        // 回车符
 			s = strings.ReplaceAll(s, "\t", "\\t")        // 制表符
 			return s
 		}

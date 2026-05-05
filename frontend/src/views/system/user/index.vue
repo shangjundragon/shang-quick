@@ -96,6 +96,7 @@ import { NButton, NSpace, NSwitch, NPopconfirm } from 'naive-ui'
 import { getUserList, addUser, updateUser, changeUserStatus, resetUserPwd, deleteUser, getUserRoleIds } from '@/api/user'
 import { getDeptList } from '@/api/dept'
 import { getRoleList } from '@/api/role'
+import { formatTimestamp } from '@/utils/format'
 
 const statusOptions = [
   { label: '启用', value: 1 },
@@ -138,7 +139,7 @@ const columns = [
       onUpdateValue: (val) => handleStatusChange(row, val)
     })
   }},
-  { title: '创建时间', key: 'createTime' },
+  { title: '创建时间', key: 'createTime', render(row) { return formatTimestamp(row.createTime) } },
   { title: '操作', key: 'actions', render(row) {
     return h(NSpace, null, {
       default: () => [

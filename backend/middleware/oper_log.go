@@ -5,6 +5,7 @@ import (
 	"backend/pkg/constants"
 	"backend/service"
 	"bytes"
+	"context"
 	"io"
 	"time"
 
@@ -18,6 +19,16 @@ func strPtr(s string) *string {
 	return &s
 }
 
+type bodyLogWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w bodyLogWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
 func OperLog(title string, operType int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		startTime := time.Now().UTC().UnixMilli()
@@ -28,7 +39,12 @@ func OperLog(title string, operType int) gin.HandlerFunc {
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody))
 		}
 
+		blw := &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
+		c.Writer = blw
+
 		c.Next()
+
+		responseData := blw.body.String()
 
 		username, _ := c.Get(constants.ContextUsernameKey)
 		if username == nil {
@@ -41,17 +57,18 @@ func OperLog(title string, operType int) gin.HandlerFunc {
 		}
 
 		operLog := &model.SysOperLog{
-			Title:       strPtr(title),
-			OperType:    operType,
-			Method:      strPtr(c.Request.Method),
-			RequestUrl:  strPtr(c.Request.URL.Path),
-			RequestData: strPtr(string(requestBody)),
-			OperName:    strPtr(username.(string)),
-			OperIp:      strPtr(c.ClientIP()),
-			OperTime:    startTime,
-			Status:      status,
+			Title:        strPtr(title),
+			OperType:     operType,
+			Method:       strPtr(c.Request.Method),
+			RequestUrl:   strPtr(c.Request.URL.Path),
+			RequestData:  strPtr(string(requestBody)),
+			ResponseData: strPtr(responseData),
+			OperName:     strPtr(username.(string)),
+			OperIp:       strPtr(c.ClientIP()),
+			OperTime:     startTime,
+			Status:       status,
 		}
 
-		go service.OperLogService.Save(operLog)
+		go service.OperLogService.Save(context.Background(), operLog)
 	}
 }
