@@ -91,8 +91,8 @@ func insertInitData() {
 
 	hashedPwd, _ := password.Hash("admin123")
 	global_vars.Db.Exec(
-		`INSERT INTO sys_user (username, password, nickname, dept_id, status, del_flag, create_by, create_time, update_by, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		"admin", hashedPwd, "管理员", 1, 1, "N", 1, now, 1, now)
+		`INSERT INTO sys_user (id ,username, password, nickname, dept_id, status, del_flag, create_by, create_time, update_by, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		1, "admin", hashedPwd, "管理员", 1, 1, "N", 1, now, 1, now)
 
 	global_vars.Db.Exec(`INSERT INTO sys_user_role (user_id, role_id) VALUES (1, 1)`)
 

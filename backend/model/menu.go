@@ -1,8 +1,8 @@
 package model
 
 type SysMenu struct {
-	Id         int64   `dbw:"primaryKey" json:"id"`
-	ParentId   int64   `dbw:"column:parent_id;default:0" json:"parentId"`
+	Id         int64   `dbw:"primaryKey" json:"id,string"`
+	ParentId   int64   `dbw:"column:parent_id;default:0" json:"parentId,string"`
 	MenuName   string  `dbw:"column:menu_name" json:"menuName"`
 	MenuType   int     `dbw:"column:menu_type" json:"menuType"`
 	Icon       *string `dbw:"column:icon" json:"icon"`
@@ -15,8 +15,8 @@ type SysMenu struct {
 	IsVisible  int     `dbw:"column:is_visible;default:1" json:"isVisible"`
 	Status     int     `dbw:"column:status;default:1" json:"status"`
 	DelFlag    string  `dbw:"column:del_flag;tableLogic" json:"delFlag"`
-	CreateTime int64   `dbw:"column:create_time;autoCreateTime:milli" json:"createTime"`
-	UpdateTime int64   `dbw:"column:update_time;autoUpdateTime:milli" json:"updateTime"`
+	CreateTime int64   `dbw:"column:create_time;autoCreateTime:milli" json:"createTime,string"`
+	UpdateTime int64   `dbw:"column:update_time;autoUpdateTime:milli" json:"updateTime,string"`
 }
 
 func (SysMenu) TableName() string {

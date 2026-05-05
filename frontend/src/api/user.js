@@ -47,3 +47,11 @@ export function deleteUser(data) {
     data
   })
 }
+
+export function getUserRoleIds(params) {
+  return request({
+    url: '/v1/user/roleIds',
+    method: 'get',
+    params
+  })
+}

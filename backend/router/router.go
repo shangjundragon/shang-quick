@@ -22,12 +22,13 @@ func SetupRouter() *gin.Engine {
 			authorized.GET("/auth/info", controller.AuthInfo)
 		}
 		{
-			authorized.GET("/user/list", middleware.OperLog("用户管理", 4), middleware.Permission("user:list"), controller.UserList)
+			authorized.GET("/user/list", middleware.Permission("user:list"), controller.UserList)
 			authorized.POST("/user/add", middleware.OperLog("用户管理", 1), middleware.Permission("user:add"), controller.UserAdd)
 			authorized.POST("/user/edit", middleware.OperLog("用户管理", 2), middleware.Permission("user:edit"), controller.UserEdit)
 			authorized.POST("/user/changeStatus", middleware.OperLog("用户管理", 2), middleware.Permission("user:edit"), controller.UserChangeStatus)
 			authorized.POST("/user/resetPwd", middleware.OperLog("用户管理", 2), middleware.Permission("user:resetPwd"), controller.UserResetPwd)
 			authorized.POST("/user/delete", middleware.OperLog("用户管理", 3), middleware.Permission("user:delete"), controller.UserDelete)
+			authorized.GET("/user/roleIds", middleware.OperLog("用户管理", 4), middleware.Permission("user:list"), controller.UserRoleIds)
 
 			authorized.GET("/dept/list", controller.DeptList)
 			authorized.POST("/dept/add", middleware.OperLog("部门管理", 1), middleware.Permission("dept:add"), controller.DeptAdd)

@@ -10,12 +10,15 @@ import (
 	"backend/service"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func ProfileGet(c *gin.Context) {
+	traceLogger, _ := req_util.GetTraceLogger(c)
 	userID, _ := c.Get(constants.ContextUserIDKey)
 	user, err := service.UserService.GetById(userID.(int64))
 	if err != nil {
+		traceLogger.Error("查询个人信息失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))
 		return
 	}
@@ -23,6 +26,7 @@ func ProfileGet(c *gin.Context) {
 }
 
 func ProfileUpdate(c *gin.Context) {
+	traceLogger, _ := req_util.GetTraceLogger(c)
 	type UpdateReq struct {
 		Nickname string `json:"nickname"`
 		Phone    string `json:"phone"`
@@ -31,6 +35,7 @@ func ProfileUpdate(c *gin.Context) {
 
 	req, err := req_util.BindJson[UpdateReq](c)
 	if err != nil {
+		traceLogger.Warn("参数错误", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
 		return
 	}
@@ -45,6 +50,7 @@ func ProfileUpdate(c *gin.Context) {
 
 	err = service.UserService.Update(user)
 	if err != nil {
+		traceLogger.Error("更新个人信息失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("更新失败"))
 		return
 	}
@@ -53,6 +59,7 @@ func ProfileUpdate(c *gin.Context) {
 }
 
 func ProfileUpdatePwd(c *gin.Context) {
+	traceLogger, _ := req_util.GetTraceLogger(c)
 	type UpdatePwdReq struct {
 		OldPassword string `json:"oldPassword" binding:"required"`
 		NewPassword string `json:"newPassword" binding:"required"`
@@ -60,6 +67,7 @@ func ProfileUpdatePwd(c *gin.Context) {
 
 	req, err := req_util.BindJson[UpdatePwdReq](c)
 	if err != nil {
+		traceLogger.Warn("参数错误", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
 		return
 	}
@@ -67,6 +75,7 @@ func ProfileUpdatePwd(c *gin.Context) {
 	userID, _ := c.Get(constants.ContextUserIDKey)
 	user, err := service.UserService.GetById(userID.(int64))
 	if err != nil {
+		traceLogger.Error("获取用户失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("用户不存在"))
 		return
 	}
@@ -84,6 +93,7 @@ func ProfileUpdatePwd(c *gin.Context) {
 
 	err = service.UserService.Update(updateUser)
 	if err != nil {
+		traceLogger.Error("修改密码失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("修改失败"))
 		return
 	}

@@ -231,6 +231,7 @@ func (s *userService) List(pageNum, pageSize int, username, phone string, status
 
 	list, total, err := wrapper.OrderByDesc("create_time").SelectPage(pageNum, pageSize)
 	if err != nil {
+		
 		return nil, 0, err
 	}
 	return list, total, nil

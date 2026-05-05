@@ -4,6 +4,7 @@ import (
 	"backend/pkg/constants"
 	"backend/pkg/global_vars"
 	"backend/pkg/logger"
+	"backend/pkg/req_util"
 	"context"
 	"database/sql"
 	"fmt"
@@ -83,15 +84,20 @@ func initDatabase() {
 
 	dbw.SetLogFn(func(sqlStr string, args []any, ctx context.Context) {
 		contextTraceId := ctx.Value(constants.ContextTraceIDKey)
-		if contextTraceId == nil {
+		var traceLogger *zap.Logger
+		if contextTraceId == nil || contextTraceId == "" {
 			contextTraceId = ""
+			traceLogger, _ = logger.GetTraceLogger()
+		} else {
+			traceLogger, _ = req_util.GetTraceLogger(ctx)
 		}
+
 		if sqlStr == "" {
-			global_vars.ZapLog.Warn("sqlStr is empty")
+			traceLogger.Warn("sqlStr is empty")
 			return
 		}
 		if len(args) == 0 {
-			global_vars.ZapLog.Warn("args is empty")
+			traceLogger.Warn("args is empty")
 		}
 
 		// escapeSQLString 转义字符串中的特殊字符
@@ -176,7 +182,7 @@ func initDatabase() {
 
 			return result
 		}
-		global_vars.ZapLog.Info("Debug SQL", zap.String(constants.ContextTraceIDKey, contextTraceId.(string)), zap.String("SQL", ReplaceSQLParams(sqlStr, args)))
+		traceLogger.Info("Debug SQL", zap.String(constants.ContextTraceIDKey, contextTraceId.(string)), zap.String("SQL", ReplaceSQLParams(sqlStr, args)))
 	})
 
 	driverName := global_vars.ConfigYml.GetString("DB.DriverName")
@@ -199,6 +205,26 @@ func initDatabase() {
 		config.DriverName = driverName
 		config.LogicDeleteValue = constants.Y
 		config.LogicNotDeleteValue = constants.N
+	})
+
+	dbw.RegisterEntityHook(func(ctx context.Context, point dbw.HookPoint, entity any) error {
+		if point != dbw.HookBeforeInsert && point != dbw.HookBeforeUpdate {
+			return nil
+		}
+		v := reflect.ValueOf(entity).Elem()
+		t := v.Type()
+		for i := 0; i < t.NumField(); i++ {
+			tagMap := dbw.ResolveDbwTag(t.Field(i).Tag.Get("dbw"))
+			if tagMap["createBy"] == "true" || tagMap["updateBy"] == "true" {
+				operationUserId := ctx.Value(constants.ContextUserIDKey)
+				if operationUserId == nil || operationUserId == "" {
+					global_vars.ZapLog.Warn("操作人用户id为空 设置为超管id")
+					operationUserId = 1
+				}
+				dbw.SetFieldValue(v.Field(i), operationUserId)
+			}
+		}
+		return nil
 	})
 
 	InitDatabase()

@@ -1,8 +1,8 @@
 package model
 
 type SysDept struct {
-	Id         int64   `dbw:"primaryKey" json:"id"`
-	ParentId   int64   `dbw:"column:parent_id;default:0" json:"parentId"`
+	Id         int64   `dbw:"primaryKey" json:"id,string"`
+	ParentId   int64   `dbw:"column:parent_id;default:0" json:"parentId,string"`
 	DeptName   string  `dbw:"column:dept_name" json:"deptName"`
 	OrderNum   int     `dbw:"column:order_num;default:0" json:"orderNum"`
 	Leader     *string `dbw:"column:leader" json:"leader"`
@@ -10,8 +10,8 @@ type SysDept struct {
 	Email      *string `dbw:"column:email" json:"email"`
 	Status     int     `dbw:"column:status;default:1" json:"status"`
 	DelFlag    string  `dbw:"column:del_flag;tableLogic" json:"delFlag"`
-	CreateTime int64   `dbw:"column:create_time;autoCreateTime:milli" json:"createTime"`
-	UpdateTime int64   `dbw:"column:update_time;autoUpdateTime:milli" json:"updateTime"`
+	CreateTime int64   `dbw:"column:create_time;autoCreateTime:milli" json:"createTime,string"`
+	UpdateTime int64   `dbw:"column:update_time;autoUpdateTime:milli" json:"updateTime,string"`
 }
 
 func (SysDept) TableName() string {

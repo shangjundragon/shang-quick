@@ -67,9 +67,11 @@ func AuthLogin(c *gin.Context) {
 }
 
 func AuthInfo(c *gin.Context) {
+	traceLogger, _ := req_util.GetTraceLogger(c)
 	userId, _ := c.Get(constants.ContextUserIDKey)
 	user, err := service.UserService.GetById(userId.(int64))
 	if err != nil || user == nil {
+		traceLogger.Error("获取用户信息失败", zap.Any("userId", userId), zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("用户不存在"))
 		return
 	}

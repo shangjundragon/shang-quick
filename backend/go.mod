@@ -8,7 +8,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.5.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
-	github.com/shangjundragon/dbw v1.2.4
+	github.com/shangjundragon/dbw v1.2.7
 	github.com/spf13/viper v1.21.0
 	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.50.0

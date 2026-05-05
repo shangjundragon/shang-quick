@@ -9,9 +9,11 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func RoleList(c *gin.Context) {
+	traceLogger, _ := req_util.GetTraceLogger(c)
 	type ListReq struct {
 		PageNum  int    `form:"pageNum" binding:"required"`
 		PageSize int    `form:"pageSize" binding:"required"`
@@ -20,12 +22,14 @@ func RoleList(c *gin.Context) {
 
 	req, err := req_util.BindQuery[ListReq](c)
 	if err != nil {
+		traceLogger.Warn("参数错误", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
 		return
 	}
 
 	list, total, err := service.RoleService.List(req.PageNum, req.PageSize, req.RoleName)
 	if err != nil {
+		traceLogger.Error("查询角色列表失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))
 		return
 	}
@@ -37,6 +41,7 @@ func RoleList(c *gin.Context) {
 }
 
 func RoleAdd(c *gin.Context) {
+	traceLogger, _ := req_util.GetTraceLogger(c)
 	type AddReq struct {
 		RoleName string `json:"roleName" binding:"required"`
 		RoleCode string `json:"roleCode" binding:"required"`
@@ -46,6 +51,7 @@ func RoleAdd(c *gin.Context) {
 
 	req, err := req_util.BindJson[AddReq](c)
 	if err != nil {
+		traceLogger.Warn("参数错误", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
 		return
 	}
@@ -59,6 +65,7 @@ func RoleAdd(c *gin.Context) {
 
 	err = service.RoleService.Add(role)
 	if err != nil {
+		traceLogger.Error("新增角色失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("新增失败"))
 		return
 	}
@@ -67,8 +74,9 @@ func RoleAdd(c *gin.Context) {
 }
 
 func RoleEdit(c *gin.Context) {
+	traceLogger, _ := req_util.GetTraceLogger(c)
 	type EditReq struct {
-		Id       int64  `json:"id" binding:"required"`
+		Id       int64  `json:"id,string" binding:"required"`
 		RoleName string `json:"roleName" binding:"required"`
 		RoleCode string `json:"roleCode" binding:"required"`
 		Remark   string `json:"remark"`
@@ -77,6 +85,7 @@ func RoleEdit(c *gin.Context) {
 
 	req, err := req_util.BindJson[EditReq](c)
 	if err != nil {
+		traceLogger.Warn("参数错误", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
 		return
 	}
@@ -91,6 +100,7 @@ func RoleEdit(c *gin.Context) {
 
 	err = service.RoleService.Update(role)
 	if err != nil {
+		traceLogger.Error("编辑角色失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("编辑失败"))
 		return
 	}
@@ -99,18 +109,21 @@ func RoleEdit(c *gin.Context) {
 }
 
 func RoleDelete(c *gin.Context) {
+	traceLogger, _ := req_util.GetTraceLogger(c)
 	type DeleteReq struct {
-		Id int64 `json:"id" binding:"required"`
+		Id int64 `json:"id,string" binding:"required"`
 	}
 
 	req, err := req_util.BindJson[DeleteReq](c)
 	if err != nil {
+		traceLogger.Warn("参数错误", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
 		return
 	}
 
 	err = service.RoleService.Delete(req.Id)
 	if err != nil {
+		traceLogger.Error("删除角色失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg(err.Error()))
 		return
 	}
@@ -119,8 +132,10 @@ func RoleDelete(c *gin.Context) {
 }
 
 func RoleMenuIds(c *gin.Context) {
+	traceLogger, _ := req_util.GetTraceLogger(c)
 	roleIdStr := c.Query("roleId")
 	if roleIdStr == "" {
+		traceLogger.Warn("参数错误")
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
 		return
 	}
@@ -130,27 +145,36 @@ func RoleMenuIds(c *gin.Context) {
 
 	menuIds, err := service.RoleService.GetMenuIds(roleId)
 	if err != nil {
+		traceLogger.Error("查询角色菜单失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("查询失败"))
 		return
 	}
 
-	res_util.Success(c, res_util.WithData(menuIds))
+	menuIdStrs := make([]string, len(menuIds))
+	for i, id := range menuIds {
+		menuIdStrs[i] = fmt.Sprintf("%d", id)
+	}
+
+	res_util.Success(c, res_util.WithData(menuIdStrs))
 }
 
 func RoleAssignMenu(c *gin.Context) {
+	traceLogger, _ := req_util.GetTraceLogger(c)
 	type AssignReq struct {
-		RoleId  int64   `json:"roleId" binding:"required"`
+		RoleId  int64   `json:"roleId,string" binding:"required"`
 		MenuIds []int64 `json:"menuIds"`
 	}
 
 	req, err := req_util.BindJson[AssignReq](c)
 	if err != nil {
+		traceLogger.Warn("参数错误", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
 		return
 	}
 
 	err = service.RoleService.AssignMenu(req.RoleId, req.MenuIds)
 	if err != nil {
+		traceLogger.Error("分配菜单失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("分配失败"))
 		return
 	}

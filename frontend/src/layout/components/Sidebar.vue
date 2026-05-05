@@ -79,7 +79,7 @@ function generateMenu(menus) {
   })
 
   displayMenus.forEach(menu => {
-    if (menu.parentId === 0) {
+    if (menu.parentId === 0 || menu.parentId === '0') {
       result.push(menuMap[menu.id])
     } else if (menuMap[menu.parentId]) {
       if (!menuMap[menu.parentId].children) {

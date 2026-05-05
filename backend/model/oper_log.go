@@ -1,7 +1,7 @@
 package model
 
 type SysOperLog struct {
-	Id           int64   `dbw:"primaryKey" json:"id"`
+	Id           int64   `dbw:"primaryKey" json:"id,string"`
 	Title        *string `dbw:"column:title" json:"title"`
 	OperType     int     `dbw:"column:oper_type" json:"operType"`
 	Method       *string `dbw:"column:method" json:"method"`
@@ -10,7 +10,7 @@ type SysOperLog struct {
 	ResponseData *string `dbw:"column:response_data" json:"responseData"`
 	OperName     *string `dbw:"column:oper_name" json:"operName"`
 	OperIp       *string `dbw:"column:oper_ip" json:"operIp"`
-	OperTime     int64   `dbw:"column:oper_time" json:"operTime"`
+	OperTime     int64   `dbw:"column:oper_time" json:"operTime,string"`
 	Status       int     `dbw:"column:status" json:"status"`
 	ErrorMsg     *string `dbw:"column:error_msg" json:"errorMsg"`
 }
