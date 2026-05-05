@@ -46,24 +46,59 @@ func UserList(c *gin.Context) {
 		RoleNames []string `json:"roleNames"`
 	}
 
+	// 批量查询部门名称
+	deptIds := make([]any, 0, len(list))
+	for _, user := range list {
+		if user.DeptId > 0 {
+			deptIds = append(deptIds, user.DeptId)
+		}
+	}
+	deptMap := make(map[int64]string)
+	if len(deptIds) > 0 {
+		depts, _ := dbw.New[model.SysDept](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(c)).
+			In("id", deptIds...).
+			SelectList()
+		for _, d := range depts {
+			deptMap[d.Id] = d.DeptName
+		}
+	}
+
+	// 批量查询角色名称
+	userIds := make([]any, 0, len(list))
+	for _, user := range list {
+		userIds = append(userIds, user.Id)
+	}
+	userRoleMap := make(map[int64][]string)
+	if len(userIds) > 0 {
+		userRoles, _ := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(c)).
+			In("user_id", userIds...).
+			SelectList()
+		if len(userRoles) > 0 {
+			roleIdSet := make([]any, 0, len(userRoles))
+			for _, ur := range userRoles {
+				roleIdSet = append(roleIdSet, ur.RoleId)
+			}
+			roles, _ := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(c)).
+				In("id", roleIdSet...).
+				SelectList()
+			roleMap := make(map[int64]string)
+			for _, r := range roles {
+				roleMap[r.Id] = r.RoleName
+			}
+			for _, ur := range userRoles {
+				if name, ok := roleMap[ur.RoleId]; ok {
+					userRoleMap[ur.UserId] = append(userRoleMap[ur.UserId], name)
+				}
+			}
+		}
+	}
+
 	voList := make([]UserVO, len(list))
 	for i, user := range list {
-		dept, _ := service.DeptService.GetById(c, user.DeptId)
-		deptName := ""
-		if dept != nil {
-			deptName = dept.DeptName
-		}
-
-		roles, _ := service.UserService.GetUserRoles(c, user.Id)
-		roleNames := make([]string, 0, len(roles))
-		for _, role := range roles {
-			roleNames = append(roleNames, role.RoleName)
-		}
-
 		voList[i] = UserVO{
 			SysUser:   user,
-			DeptName:  deptName,
-			RoleNames: roleNames,
+			DeptName:  deptMap[user.DeptId],
+			RoleNames: userRoleMap[user.Id],
 		}
 	}
 
@@ -93,8 +128,19 @@ func UserAdd(c *gin.Context) {
 		return
 	}
 
-	if err := password.ValidatePassword(req.Password); err != nil {
+	if err := password.ValidatePasswordStrong(req.Password); err != nil {
 		res_util.Fail(c, res_util.WithMsg(err.Error()))
+		return
+	}
+
+	exists, err := service.UserService.CheckUsernameExists(c, req.Username)
+	if err != nil {
+		traceLogger.Error("检查用户名失败", zap.Error(err))
+		res_util.Fail(c, res_util.WithMsg("操作失败"))
+		return
+	}
+	if exists {
+		res_util.Fail(c, res_util.WithMsg("用户名已存在"))
 		return
 	}
 
@@ -153,17 +199,11 @@ func UserEdit(c *gin.Context) {
 	updateBy, _ := c.Get(constants.ContextUserIDKey)
 	user.UpdateBy = updateBy.(int64)
 
-	err = service.UserService.Update(c, user)
+	err = service.UserService.UpdateWithRoles(c, user, req.RoleIds)
 	if err != nil {
 		traceLogger.Error("编辑失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("编辑失败"))
 		return
-	}
-
-	dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(c)).Eq("user_id", req.Id).Delete()
-	for _, roleId := range req.RoleIds {
-		dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(c)).Insert(
-			&model.SysUserRole{UserId: req.Id, RoleId: roleId})
 	}
 
 	res_util.Success(c)

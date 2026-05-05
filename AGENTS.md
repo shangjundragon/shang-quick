@@ -8,6 +8,7 @@
 
 ## 前端 (frontend/)
 
+- **包管理器**: pnpm
 - **框架**: Vue 3 (`<script setup>` 语法)
 - **构建工具**: Vite
 - **UI 库**: Naive UI

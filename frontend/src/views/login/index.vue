@@ -37,8 +37,8 @@ const formRef = ref(null)
 const loading = ref(false)
 
 const form = ref({
-  username: 'admin',
-  password: 'admin123'
+  username: '',
+  password: ''
 })
 
 const rules = {
@@ -60,7 +60,7 @@ async function handleLogin() {
     window.$message.success('登录成功')
     router.push('/')
   } catch (error) {
-    console.error(error)
+    window.$message.error(error?.message || '登录失败')
   } finally {
     loading.value = false
   }

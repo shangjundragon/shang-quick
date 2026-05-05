@@ -87,3 +87,17 @@ CREATE TABLE IF NOT EXISTS sys_oper_log (
     status INTEGER,
     error_msg TEXT
 );
+
+CREATE TABLE IF NOT EXISTS sys_file (
+    id INTEGER PRIMARY KEY,
+    original_name TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    file_size INTEGER,
+    file_type TEXT,
+    is_image INTEGER DEFAULT 0,
+    create_by INTEGER,
+    create_time INTEGER,
+    update_time INTEGER,
+    del_flag TEXT DEFAULT 'N'
+);

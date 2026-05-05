@@ -91,7 +91,7 @@ func insertInitData() {
 
 	hashedPwd, _ := password.Hash("admin123")
 	global_vars.Db.Exec(
-		`INSERT INTO sys_user (id ,username, password, nickname, dept_id, status, del_flag, create_by, create_time, update_by, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO sys_user (id ,username, password, nickname, dept_id, status, del_flag, create_by, create_time, update_by, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		1, "admin", hashedPwd, "管理员", 1, 1, "N", 1, now, 1, now)
 
 	global_vars.Db.Exec(`INSERT INTO sys_user_role (user_id, role_id) VALUES (1, 1)`)
@@ -114,6 +114,7 @@ func insertInitData() {
 		{1, "菜单管理", 1, "MenuOutline", "menu", "system/menu/index", "menu:list", 3},
 		{1, "角色管理", 1, "ShieldOutline", "role", "system/role/index", "role:list", 4},
 		{1, "操作日志", 1, "DocumentTextOutline", "operLog", "system/operLog/index", "operLog:list", 5},
+		{1, "文件管理", 1, "FolderOutline", "file", "system/file/index", "file:list", 6},
 	}
 
 	menuIds := make([]int64, len(menus))
@@ -144,6 +145,8 @@ func insertInitData() {
 		{menuIds[6], "编辑", "role:edit"},
 		{menuIds[6], "删除", "role:delete"},
 		{menuIds[6], "分配权限", "role:assign"},
+		{menuIds[7], "上传", "file:upload"},
+		{menuIds[7], "删除", "file:delete"},
 	}
 
 	for _, btn := range buttons {

@@ -4,13 +4,17 @@ import (
 	"backend/pkg/constants"
 	"backend/pkg/jwt"
 	"backend/pkg/password"
+	"backend/pkg/ratelimit"
 	"backend/pkg/req_util"
 	"backend/pkg/res_util"
 	"backend/service"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
+
+var loginLimiter = ratelimit.New(5, time.Minute)
 
 func AuthLogin(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
@@ -22,6 +26,11 @@ func AuthLogin(c *gin.Context) {
 	req, err := req_util.BindJson[LoginReq](c)
 	if err != nil {
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
+		return
+	}
+
+	if !loginLimiter.Allow("login:" + req.Username) {
+		res_util.Fail(c, res_util.WithMsg("登录过于频繁，请1分钟后再试"))
 		return
 	}
 

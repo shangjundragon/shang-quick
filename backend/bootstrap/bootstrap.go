@@ -47,7 +47,7 @@ func initBasePath() {
 	// 判断是否在运行测试
 	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "-test") {
 		// 如果当前路径的最后一层是 tests 或 test，则使用父目录作为根路径
-		if base := filepath.Base(curPath); base == "test" || base == "test" {
+		if base := filepath.Base(curPath); base == "test" || base == "tests" {
 			global_vars.BasePath = filepath.Dir(curPath)
 		} else {
 			global_vars.BasePath = curPath

@@ -77,6 +77,12 @@ export const allRoutes = [
         name: 'OperLog',
         component: () => import('@/views/system/operLog/index.vue'),
         meta: { title: '操作日志', icon: 'DocumentTextOutline' }
+      },
+      {
+        path: 'file',
+        name: 'File',
+        component: () => import('@/views/system/file/index.vue'),
+        meta: { title: '文件管理', icon: 'FolderOutline' }
       }
     ]
   }

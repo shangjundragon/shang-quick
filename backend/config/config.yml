@@ -23,4 +23,9 @@ Jwt:
 Cache:
   UseRedis: false
 
+Upload:
+  MaxSize: 100
+  PublicAccess: true
+  ImageCompressQuality: 80
+  FileUrlPrefix: "http://localhost:8084/uploads"
 

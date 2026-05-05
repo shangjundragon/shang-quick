@@ -4,6 +4,7 @@ import (
 	"backend/model"
 	"backend/pkg/global_vars"
 	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/shangjundragon/dbw"
@@ -43,15 +44,17 @@ func (s *roleService) Delete(ctx context.Context, id int64) error {
 		return errors.New("角色下存在用户，无法删除")
 	}
 
-	_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
-		Eq("role_id", id).
-		Delete()
-	if err != nil {
-		return err
-	}
+	return dbw.ExecuteTx(func(tx *sql.Tx) error {
+		_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).
+			Eq("role_id", id).
+			Delete()
+		if err != nil {
+			return err
+		}
 
-	_, err = dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).DeleteById(id)
-	return err
+		_, err = dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).DeleteById(id)
+		return err
+	}, global_vars.DbConfig.Db)
 }
 
 func (s *roleService) GetById(ctx context.Context, id int64) (*model.SysRole, error) {
@@ -74,22 +77,24 @@ func (s *roleService) GetMenuIds(ctx context.Context, roleId int64) ([]int64, er
 }
 
 func (s *roleService) AssignMenu(ctx context.Context, roleId int64, menuIds []int64) error {
-	_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
-		Eq("role_id", roleId).
-		Delete()
-	if err != nil {
-		return err
-	}
-
-	for _, menuId := range menuIds {
-		_, err = dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).Insert(
-			&model.SysRoleMenu{
-				RoleId: roleId,
-				MenuId: menuId,
-			})
+	return dbw.ExecuteTx(func(tx *sql.Tx) error {
+		_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).
+			Eq("role_id", roleId).
+			Delete()
 		if err != nil {
 			return err
 		}
-	}
-	return nil
+
+		for _, menuId := range menuIds {
+			_, err = dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).Insert(
+				&model.SysRoleMenu{
+					RoleId: roleId,
+					MenuId: menuId,
+				})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}, global_vars.DbConfig.Db)
 }

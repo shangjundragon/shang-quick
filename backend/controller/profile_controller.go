@@ -73,7 +73,7 @@ func ProfileUpdatePwd(c *gin.Context) {
 		return
 	}
 
-	if err := password.ValidatePassword(req.NewPassword); err != nil {
+	if err := password.ValidatePasswordStrong(req.NewPassword); err != nil {
 		res_util.Fail(c, res_util.WithMsg(err.Error()))
 		return
 	}

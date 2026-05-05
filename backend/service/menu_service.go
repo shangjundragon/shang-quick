@@ -4,6 +4,7 @@ import (
 	"backend/model"
 	"backend/pkg/global_vars"
 	"context"
+	"errors"
 
 	"github.com/shangjundragon/dbw"
 )
@@ -35,6 +36,13 @@ func (s *menuService) Delete(ctx context.Context, id int64) error {
 
 	for _, child := range children {
 		s.Delete(ctx, child.Id)
+	}
+
+	roleMenus, _ := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
+		Eq("menu_id", id).
+		SelectList()
+	if len(roleMenus) > 0 {
+		return errors.New("菜单已被角色引用，无法删除")
 	}
 
 	_, err := dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).DeleteById(id)
