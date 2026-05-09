@@ -59,6 +59,20 @@ func (m *MemoryCache) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+func (m *MemoryCache) ForEach(fn func(key, value string) bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	now := time.Now()
+	for key, item := range m.data {
+		if now.After(item.expireTime) {
+			continue
+		}
+		if !fn(key, item.value) {
+			break
+		}
+	}
+}
+
 var GlobalCache Cache
 
 func InitCache() {

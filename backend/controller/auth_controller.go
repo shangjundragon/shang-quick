@@ -8,6 +8,7 @@ import (
 	"backend/pkg/req_util"
 	"backend/pkg/res_util"
 	"backend/service"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -66,6 +67,17 @@ func AuthLogin(c *gin.Context) {
 	perms, _ := service.UserService.GetUserPermissions(c, user.Id)
 	menus, _ := service.UserService.GetUserMenus(c, user.Id)
 
+	nickname := ""
+	if user.Nickname != nil {
+		nickname = *user.Nickname
+	}
+
+	service.OnlineUserService.RecordLogin(c, token, user.Id, user.Username, nickname)
+
+	ipAddr := c.ClientIP()
+	browser, os := parseUserAgent(c.GetHeader("User-Agent"))
+	service.OnlineUserService.SetUserAgent(c, token, ipAddr, browser, os)
+
 	res_util.Success(c, res_util.WithData(gin.H{
 		"token":       token,
 		"userInfo":    user,
@@ -73,6 +85,37 @@ func AuthLogin(c *gin.Context) {
 		"permissions": perms,
 		"menus":       menus,
 	}))
+}
+
+func parseUserAgent(ua string) (browser, os string) {
+	browser = "Unknown"
+	os = "Unknown"
+
+	ua = strings.ToLower(ua)
+
+	if strings.Contains(ua, "windows") {
+		os = "Windows"
+	} else if strings.Contains(ua, "macintosh") || strings.Contains(ua, "mac os") {
+		os = "MacOS"
+	} else if strings.Contains(ua, "linux") {
+		os = "Linux"
+	} else if strings.Contains(ua, "android") {
+		os = "Android"
+	} else if strings.Contains(ua, "iphone") || strings.Contains(ua, "ipad") {
+		os = "iOS"
+	}
+
+	if strings.Contains(ua, "chrome") && !strings.Contains(ua, "edg") {
+		browser = "Chrome"
+	} else if strings.Contains(ua, "firefox") {
+		browser = "Firefox"
+	} else if strings.Contains(ua, "safari") && !strings.Contains(ua, "chrome") {
+		browser = "Safari"
+	} else if strings.Contains(ua, "edg") {
+		browser = "Edge"
+	}
+
+	return
 }
 
 func AuthInfo(c *gin.Context) {

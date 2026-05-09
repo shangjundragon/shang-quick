@@ -83,6 +83,12 @@ export const allRoutes = [
         name: 'File',
         component: () => import('@/views/system/file/index.vue'),
         meta: { title: '文件管理', icon: 'FolderOutline' }
+      },
+      {
+        path: 'onlineUser',
+        name: 'OnlineUser',
+        component: () => import('@/views/system/onlineUser/index.vue'),
+        meta: { title: '在线用户', icon: 'WifiOutline' }
       }
     ]
   }

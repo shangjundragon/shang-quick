@@ -115,6 +115,7 @@ func insertInitData() {
 		{1, "角色管理", 1, "ShieldOutline", "role", "system/role/index", "role:list", 4},
 		{1, "操作日志", 1, "DocumentTextOutline", "operLog", "system/operLog/index", "operLog:list", 5},
 		{1, "文件管理", 1, "FolderOutline", "file", "system/file/index", "file:list", 6},
+		{1, "在线用户", 1, "WifiOutline", "onlineUser", "system/onlineUser/index", "onlineUser:list", 7},
 	}
 
 	menuIds := make([]int64, len(menus))
@@ -147,6 +148,7 @@ func insertInitData() {
 		{menuIds[6], "分配权限", "role:assign"},
 		{menuIds[7], "上传", "file:upload"},
 		{menuIds[7], "删除", "file:delete"},
+		{menuIds[8], "踢出", "onlineUser:kick"},
 	}
 
 	for _, btn := range buttons {

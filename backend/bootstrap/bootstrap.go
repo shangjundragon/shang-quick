@@ -105,11 +105,11 @@ func initDatabase() {
 
 		// escapeSQLString 转义字符串中的特殊字符
 		escapeSQLString := func(s string) string {
-			s = strings.ReplaceAll(s, "'", "''")          // 单引号转义
-			s = strings.ReplaceAll(s, "\\", "\\\\")       // 反斜杠转义
-			s = strings.ReplaceAll(s, "\n", "\\n")        // 换行符
-			s = strings.ReplaceAll(s, "\r", "\\r")        // 回车符
-			s = strings.ReplaceAll(s, "\t", "\\t")        // 制表符
+			s = strings.ReplaceAll(s, "'", "''")    // 单引号转义
+			s = strings.ReplaceAll(s, "\\", "\\\\") // 反斜杠转义
+			s = strings.ReplaceAll(s, "\n", "\\n")  // 换行符
+			s = strings.ReplaceAll(s, "\r", "\\r")  // 回车符
+			s = strings.ReplaceAll(s, "\t", "\\t")  // 制表符
 			return s
 		}
 
@@ -216,14 +216,18 @@ func initDatabase() {
 		}
 		v := reflect.ValueOf(entity).Elem()
 		t := v.Type()
+		operationUserId := ctx.Value(constants.ContextUserIDKey)
+		if operationUserId == nil || operationUserId == "" {
+			global_vars.ZapLog.Debug("操作人用户id为空 设置为超管id")
+			operationUserId = 1
+		}
 		for i := 0; i < t.NumField(); i++ {
 			tagMap := dbw.ResolveDbwTag(t.Field(i).Tag.Get("dbw"))
-			if tagMap["createBy"] == "true" || tagMap["updateBy"] == "true" {
-				operationUserId := ctx.Value(constants.ContextUserIDKey)
-				if operationUserId == nil || operationUserId == "" {
-					global_vars.ZapLog.Warn("操作人用户id为空 设置为超管id")
-					operationUserId = 1
-				}
+			if point == dbw.HookBeforeInsert && (tagMap["createBy"] == "true" || tagMap["updateBy"] == "true") {
+				dbw.SetFieldValue(v.Field(i), operationUserId)
+			}
+
+			if point == dbw.HookBeforeUpdate && tagMap["updateBy"] == "true" {
 				dbw.SetFieldValue(v.Field(i), operationUserId)
 			}
 		}

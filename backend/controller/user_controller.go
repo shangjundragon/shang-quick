@@ -155,9 +155,6 @@ func UserAdd(c *gin.Context) {
 		Status:   req.Status,
 	}
 
-	createBy, _ := c.Get(constants.ContextUserIDKey)
-	user.CreateBy = createBy.(int64)
-
 	err = service.UserService.AddWithRoles(c, user, req.RoleIds)
 	if err != nil {
 		traceLogger.Error("新增失败", zap.Error(err))

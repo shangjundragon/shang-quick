@@ -11,9 +11,9 @@ type SysUser struct {
 	DeptId     int64   `dbw:"column:dept_id" json:"deptId,string"`
 	Status     int     `dbw:"column:status;default:1" json:"status"`
 	DelFlag    string  `dbw:"column:del_flag;tableLogic" json:"delFlag"`
-	CreateBy   int64   `dbw:"column:create_by" json:"createBy,string"`
+	CreateBy   int64   `dbw:"column:create_by;createBy" json:"createBy,string"`
 	CreateTime int64   `dbw:"column:create_time;autoCreateTime:milli" json:"createTime,string"`
-	UpdateBy   int64   `dbw:"column:update_by" json:"updateBy,string"`
+	UpdateBy   int64   `dbw:"column:update_by;updateBy" json:"updateBy,string"`
 	UpdateTime int64   `dbw:"column:update_time;autoUpdateTime:milli" json:"updateTime,string"`
 }
 
