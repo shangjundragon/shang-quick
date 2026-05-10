@@ -5,6 +5,7 @@ import (
 	"backend/pkg/constants"
 	"backend/pkg/fileutil"
 	"backend/pkg/global_vars"
+	"backend/pkg/jwt"
 	"backend/pkg/req_util"
 	"backend/pkg/res_util"
 	"backend/service"
@@ -135,13 +136,36 @@ func FileAccess(c *gin.Context) {
 			c.AbortWithStatus(401)
 			return
 		}
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			c.AbortWithStatus(401)
+			return
+		}
+		_, err := jwt.ParseToken(parts[1])
+		if err != nil {
+			c.AbortWithStatus(401)
+			return
+		}
 	}
 
-	fullPath := filepath.Join(global_vars.BasePath, "storage", "uploads", strings.TrimPrefix(filePath, "/"))
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+	uploadsDir := filepath.Join(global_vars.BasePath, "storage", "uploads")
+	fullPath := filepath.Join(uploadsDir, strings.TrimPrefix(filePath, "/"))
+
+	resolvedPath, err := filepath.EvalSymlinks(fullPath)
+	if err != nil {
+		c.AbortWithStatus(404)
+		return
+	}
+	resolvedUploads, _ := filepath.EvalSymlinks(uploadsDir)
+	if !strings.HasPrefix(resolvedPath, resolvedUploads+string(filepath.Separator)) && resolvedPath != resolvedUploads {
+		c.AbortWithStatus(403)
+		return
+	}
+
+	if _, err := os.Stat(resolvedPath); os.IsNotExist(err) {
 		c.AbortWithStatus(404)
 		return
 	}
 
-	c.File(fullPath)
+	c.File(resolvedPath)
 }
