@@ -44,7 +44,7 @@ func (s *roleService) Delete(ctx context.Context, id int64) error {
 		return errors.New("角色下存在用户，无法删除")
 	}
 
-	return dbw.ExecuteTx(func(tx *sql.Tx) error {
+	err := dbw.ExecuteTx(func(tx *sql.Tx) error {
 		_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).
 			Eq("role_id", id).
 			Delete()
@@ -55,6 +55,11 @@ func (s *roleService) Delete(ctx context.Context, id int64) error {
 		_, err = dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).DeleteById(id)
 		return err
 	}, global_vars.DbConfig.Db)
+
+	if err == nil {
+		UserService.ClearAllPermissionCache(ctx)
+	}
+	return err
 }
 
 func (s *roleService) GetById(ctx context.Context, id int64) (*model.SysRole, error) {
@@ -77,7 +82,7 @@ func (s *roleService) GetMenuIds(ctx context.Context, roleId int64) ([]int64, er
 }
 
 func (s *roleService) AssignMenu(ctx context.Context, roleId int64, menuIds []int64) error {
-	return dbw.ExecuteTx(func(tx *sql.Tx) error {
+	err := dbw.ExecuteTx(func(tx *sql.Tx) error {
 		_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).
 			Eq("role_id", roleId).
 			Delete()
@@ -97,4 +102,9 @@ func (s *roleService) AssignMenu(ctx context.Context, roleId int64, menuIds []in
 		}
 		return nil
 	}, global_vars.DbConfig.Db)
+	if err != nil {
+		return err
+	}
+	UserService.ClearAllPermissionCache(ctx)
+	return nil
 }

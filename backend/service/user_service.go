@@ -3,12 +3,14 @@ package service
 import (
 	"backend/model"
 	"backend/pkg/cache"
+	"backend/pkg/constants"
 	"backend/pkg/global_vars"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/shangjundragon/dbw"
@@ -304,7 +306,7 @@ func (s *userService) Update(ctx context.Context, user *model.SysUser) error {
 }
 
 func (s *userService) UpdateWithRoles(ctx context.Context, user *model.SysUser, roleIds []int64) error {
-	return dbw.ExecuteTx(func(tx *sql.Tx) error {
+	err := dbw.ExecuteTx(func(tx *sql.Tx) error {
 		_, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).UpdateById(user)
 		if err != nil {
 			return err
@@ -326,10 +328,15 @@ func (s *userService) UpdateWithRoles(ctx context.Context, user *model.SysUser, 
 		}
 		return nil
 	}, global_vars.DbConfig.Db)
+	if err != nil {
+		return err
+	}
+	s.ClearPermissionCache(ctx, user.Id)
+	return nil
 }
 
 func (s *userService) Delete(ctx context.Context, id int64) error {
-	return dbw.ExecuteTx(func(tx *sql.Tx) error {
+	err := dbw.ExecuteTx(func(tx *sql.Tx) error {
 		_, err := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).
 			Eq("user_id", id).
 			Delete()
@@ -340,8 +347,48 @@ func (s *userService) Delete(ctx context.Context, id int64) error {
 		_, err = dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).DeleteById(id)
 		return err
 	}, global_vars.DbConfig.Db)
+	if err != nil {
+		return err
+	}
+	s.ClearPermissionCache(ctx, id)
+	return nil
 }
 
 func (s *userService) GetById(ctx context.Context, id int64) (*model.SysUser, error) {
 	return dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).SelectById(id)
+}
+
+func (s *userService) IsAdmin(ctx context.Context, userID int64) (bool, error) {
+	roles, err := s.GetUserRoles(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+	for _, role := range roles {
+		if role.RoleCode == constants.RoleCodeAdmin {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (s *userService) ClearPermissionCache(ctx context.Context, userID int64) {
+	cacheKey := fmt.Sprintf("perms:%d", userID)
+	if cache.GlobalCache != nil {
+		cache.GlobalCache.Delete(ctx, cacheKey)
+	}
+}
+
+func (s *userService) ClearAllPermissionCache(ctx context.Context) {
+	if memCache, ok := cache.GlobalCache.(*cache.MemoryCache); ok {
+		var keysToDelete []string
+		memCache.ForEach(func(key, value string) bool {
+			if strings.HasPrefix(key, "perms:") {
+				keysToDelete = append(keysToDelete, key)
+			}
+			return true
+		})
+		for _, key := range keysToDelete {
+			memCache.Delete(ctx, key)
+		}
+	}
 }
