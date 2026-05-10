@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"backend/model"
 	"backend/pkg/fileutil"
 	"backend/pkg/global_vars"
@@ -21,7 +22,33 @@ var FileService = new(fileService)
 
 type fileService struct{}
 
+func (s *fileService) getAllowedExtensions() []string {
+	exts := global_vars.ConfigYml.GetStringSlice("Upload.AllowedExtensions")
+	if len(exts) == 0 {
+		return []string{"*"}
+	}
+	return exts
+}
+
+func (s *fileService) isExtensionAllowed(ext string) bool {
+	allowed := s.getAllowedExtensions()
+	for _, allowedExt := range allowed {
+		if allowedExt == "*" {
+			return true
+		}
+		if strings.EqualFold(allowedExt, ext) {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *fileService) Upload(ctx context.Context, originalName string, fileSize int64, fileType string, reader io.Reader, userID int64) (*model.SysFile, error) {
+	ext := strings.ToLower(filepath.Ext(originalName))
+	if !s.isExtensionAllowed(ext) {
+		return nil, fmt.Errorf("file extension '%s' is not allowed", ext)
+	}
+
 	now := time.Now()
 	uniqueName := fileutil.GenerateUniqueFileName(originalName)
 	uploadDir := fileutil.GetUploadDir(global_vars.BasePath, now)
@@ -32,22 +59,47 @@ func (s *fileService) Upload(ctx context.Context, originalName string, fileSize 
 		return nil, err
 	}
 
+	tempFile, err := os.CreateTemp("", "upload-*")
+	if err != nil {
+		return nil, err
+	}
+	tempPath := tempFile.Name()
+	defer os.Remove(tempPath)
+
+	if _, err := io.Copy(tempFile, reader); err != nil {
+		tempFile.Close()
+		return nil, err
+	}
+	tempFile.Close()
+
 	isImg := 0
 	if fileutil.IsImage(fileType) {
 		isImg = 1
 	}
 
 	if isImg == 1 {
-		if err := s.compressAndSaveImage(reader, fullPath, fileType); err != nil {
-			return nil, err
-		}
-	} else {
-		file, err := os.Create(fullPath)
+		f, err := os.Open(tempPath)
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
-		if _, err := io.Copy(file, reader); err != nil {
+		detectedType, err := fileutil.DetectFileType(f)
+		f.Close()
+		if err != nil {
+			return nil, err
+		}
+		normalizedType := fileutil.NormalizeContentType(fileType)
+		if normalizedType != "" && normalizedType != detectedType {
+			return nil, fmt.Errorf("file type mismatch: declared '%s' but detected '%s'", fileType, detectedType)
+		}
+	}
+
+	if err := os.Rename(tempPath, fullPath); err != nil {
+		return nil, err
+	}
+
+	if isImg == 1 {
+		if err := s.compressAndSaveImage(fullPath, fileType); err != nil {
+			os.Remove(fullPath)
 			return nil, err
 		}
 	}
@@ -62,7 +114,7 @@ func (s *fileService) Upload(ctx context.Context, originalName string, fileSize 
 		CreateBy:     userID,
 	}
 
-	_, err := dbw.New[model.SysFile](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).Insert(file)
+	_, err = dbw.New[model.SysFile](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).Insert(file)
 	if err != nil {
 		os.Remove(fullPath)
 		return nil, err
@@ -71,14 +123,30 @@ func (s *fileService) Upload(ctx context.Context, originalName string, fileSize 
 	return file, nil
 }
 
-func (s *fileService) compressAndSaveImage(reader io.Reader, fullPath string, fileType string) error {
-	img, _, err := image.Decode(reader)
+const maxImageDimension = 10000
+
+func (s *fileService) compressAndSaveImage(fullPath string, fileType string) error {
+	if fileType != "image/jpeg" && fileType != "image/png" {
+		return nil
+	}
+
+	f, err := os.Open(fullPath)
+	if err != nil {
+		return err
+	}
+	img, _, err := image.Decode(f)
+	f.Close()
 	if err != nil {
 		return err
 	}
 
+	bounds := img.Bounds()
+	if bounds.Dx() > maxImageDimension || bounds.Dy() > maxImageDimension {
+		return fmt.Errorf("image dimensions too large, maximum supported is %dx%d", maxImageDimension, maxImageDimension)
+	}
+
 	quality := global_vars.ConfigYml.GetInt("Upload.ImageCompressQuality")
-	if quality <= 0 || quality > 100 {
+	if quality < 0 || quality > 100 {
 		quality = 80
 	}
 

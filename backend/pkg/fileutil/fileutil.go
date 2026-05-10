@@ -2,6 +2,7 @@ package fileutil
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -34,6 +35,40 @@ func IsImage(contentType string) bool {
 	default:
 		return false
 	}
+}
+
+func DetectFileType(reader io.Reader) (string, error) {
+	buf := make([]byte, 512)
+	n, err := reader.Read(buf)
+	if err != nil && err != io.EOF {
+		return "", err
+	}
+	buf = buf[:n]
+
+	if len(buf) >= 2 && buf[0] == 0xFF && buf[1] == 0xD8 {
+		return "image/jpeg", nil
+	}
+	if len(buf) >= 8 && string(buf[:8]) == "\x89PNG\r\n\x1a\n" {
+		return "image/png", nil
+	}
+	if len(buf) >= 6 && (string(buf[:6]) == "GIF87a" || string(buf[:6]) == "GIF89a") {
+		return "image/gif", nil
+	}
+	if len(buf) >= 12 && string(buf[:4]) == "RIFF" && string(buf[8:12]) == "WEBP" {
+		return "image/webp", nil
+	}
+	if len(buf) >= 2 && buf[0] == 'B' && buf[1] == 'M' {
+		return "image/bmp", nil
+	}
+
+	return "application/octet-stream", nil
+}
+
+func NormalizeContentType(contentType string) string {
+	if contentType == "image/jpg" {
+		return "image/jpeg"
+	}
+	return contentType
 }
 
 func FormatFileSize(size int64) string {
