@@ -1,10 +1,15 @@
 package password
 
 import (
+	"crypto/rand"
 	"errors"
+	"math/big"
+	mrand "math/rand"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+const passwordChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
 
 func Hash(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -56,4 +61,32 @@ func ValidatePasswordStrong(password string) error {
 		return errors.New("密码必须包含特殊字符")
 	}
 	return nil
+}
+
+func GenerateRandomPassword(length int) string {
+	if length < 8 {
+		length = 12
+	}
+
+	result := []byte{
+		passwordChars[randInt(26, 52)],
+		passwordChars[randInt(0, 26)],
+		passwordChars[randInt(52, 62)],
+		passwordChars[randInt(62, len(passwordChars))],
+	}
+
+	for i := 4; i < length; i++ {
+		result = append(result, passwordChars[randInt(0, len(passwordChars))])
+	}
+
+	mrand.Shuffle(len(result), func(i, j int) {
+		result[i], result[j] = result[j], result[i]
+	})
+
+	return string(result)
+}
+
+func randInt(min, max int) int {
+	n, _ := rand.Int(rand.Reader, big.NewInt(int64(max-min)))
+	return int(n.Int64()) + min
 }

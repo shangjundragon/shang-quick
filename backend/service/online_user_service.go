@@ -131,7 +131,7 @@ func (s *onlineUserService) List(ctx context.Context) ([]*model.OnlineUser, erro
 		return []*model.OnlineUser{}, nil
 	}
 
-	var result []*model.OnlineUser
+	result := make([]*model.OnlineUser, 0)
 
 	if memCache, ok := cache.GlobalCache.(*cache.MemoryCache); ok {
 		memCache.ForEach(func(key, value string) bool {

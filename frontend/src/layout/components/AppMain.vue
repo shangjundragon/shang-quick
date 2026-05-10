@@ -10,8 +10,9 @@
 
 <style scoped>
 .app-main {
+  flex: 1;
+  overflow-y: auto;
   padding: 20px;
-  min-height: calc(100vh - 64px);
 }
 
 .fade-enter-active,

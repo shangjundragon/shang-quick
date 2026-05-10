@@ -47,7 +47,7 @@
         <n-form-item v-if="!isEdit" label="密码" required>
           <n-input v-model:value="form.password" type="password" />
         </n-form-item>
-        <n-form-item label="昵称">
+        <n-form-item label="昵称" required>
           <n-input v-model:value="form.nickname" />
         </n-form-item>
         <n-form-item label="手机号">

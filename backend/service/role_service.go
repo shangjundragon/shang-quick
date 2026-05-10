@@ -26,13 +26,43 @@ func (s *roleService) List(ctx context.Context, pageNum, pageSize int, roleName 
 	return list, total, nil
 }
 
+func (s *roleService) CheckRoleCodeExists(ctx context.Context, roleCode string, excludeId int64) (bool, error) {
+	role, err := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
+		Eq("role_code", roleCode).
+		FindOne()
+	if err != nil {
+		if errors.Is(err, dbw.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	if excludeId > 0 && role.Id == excludeId {
+		return false, nil
+	}
+	return true, nil
+}
+
 func (s *roleService) Add(ctx context.Context, role *model.SysRole) error {
-	_, err := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).Insert(role)
+	exists, err := s.CheckRoleCodeExists(ctx, role.RoleCode, 0)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New("角色编码已存在")
+	}
+	_, err = dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).Insert(role)
 	return err
 }
 
 func (s *roleService) Update(ctx context.Context, role *model.SysRole) error {
-	_, err := dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).UpdateById(role)
+	exists, err := s.CheckRoleCodeExists(ctx, role.RoleCode, role.Id)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return errors.New("角色编码已存在")
+	}
+	_, err = dbw.New[model.SysRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).UpdateById(role)
 	return err
 }
 

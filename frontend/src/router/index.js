@@ -98,6 +98,13 @@ allRoutes.forEach(route => {
   router.addRoute(route)
 })
 
+router.addRoute({
+  path: '/:pathMatch(.*)*',
+  name: 'NotFound',
+  redirect: '/login',
+  hidden: true
+})
+
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
 

@@ -25,11 +25,11 @@ const columns = [
   { title: 'IP地址', key: 'ipAddr' },
   { title: '浏览器', key: 'browser' },
   { title: '操作系统', key: 'os' },
-  { title: '登录时间', key: 'loginTime', render(row) { return formatTimestamp(row.loginTime) } },
-  { title: '最后活跃', key: 'lastActiveTime', render(row) { return formatTimestamp(row.lastActiveTime) } },
+  { title: '登录时间', key: 'loginTime', render(row) { return row.loginTime ? formatTimestamp(row.loginTime) : '' } },
+  { title: '最后活跃', key: 'lastActiveTime', render(row) { return row.lastActiveTime ? formatTimestamp(row.lastActiveTime) : '' } },
   { title: '操作', key: 'actions', render(row) {
     return h(NPopconfirm, { onPositiveClick: () => handleKick(row) }, {
-      trigger: () => h(NButton, { size: 'small', type: 'error', vPermission: ['onlineUser:kick'] }, { default: () => '踢出' }),
+      trigger: () => h(NButton, { size: 'small', type: 'error' }, { default: () => '踢出' }),
       default: () => '确定踢出该用户吗？'
     })
   }}
@@ -43,7 +43,9 @@ async function loadData() {
   loading.value = true
   try {
     const res = await getOnlineUserList()
-    tableData.value = res
+    tableData.value = Array.isArray(res) ? res : []
+  } catch (e) {
+    window.$message?.error(e.message || '获取在线用户失败')
   } finally {
     loading.value = false
   }

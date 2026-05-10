@@ -15,4 +15,4 @@ backend/storage
 *.linux
 *.idea
 
-*.exe
+backend/backend

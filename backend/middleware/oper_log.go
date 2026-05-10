@@ -7,9 +7,16 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
+)
+
+var (
+	passwordRe    = regexp.MustCompile(`"password"\s*:\s*"[^"]*"`)
+	oldPasswordRe = regexp.MustCompile(`"oldPassword"\s*:\s*"[^"]*"`)
+	newPasswordRe = regexp.MustCompile(`"newPassword"\s*:\s*"[^"]*"`)
 )
 
 func strPtr(s string) *string {
@@ -17,6 +24,16 @@ func strPtr(s string) *string {
 		return nil
 	}
 	return &s
+}
+
+func sanitizeSensitiveData(data string) string {
+	if data == "" {
+		return data
+	}
+	sanitized := passwordRe.ReplaceAllString(data, `"password":"***"`)
+	sanitized = oldPasswordRe.ReplaceAllString(sanitized, `"oldPassword":"***"`)
+	sanitized = newPasswordRe.ReplaceAllString(sanitized, `"newPassword":"***"`)
+	return sanitized
 }
 
 type bodyLogWriter struct {
@@ -61,14 +78,15 @@ func OperLog(title string, operType int) gin.HandlerFunc {
 			OperType:     operType,
 			Method:       strPtr(c.Request.Method),
 			RequestUrl:   strPtr(c.Request.URL.Path),
-			RequestData:  strPtr(string(requestBody)),
-			ResponseData: strPtr(responseData),
+			RequestData:  strPtr(sanitizeSensitiveData(string(requestBody))),
+			ResponseData: strPtr(sanitizeSensitiveData(responseData)),
 			OperName:     strPtr(username.(string)),
 			OperIp:       strPtr(c.ClientIP()),
 			OperTime:     startTime,
 			Status:       status,
 		}
 
-		go service.OperLogService.Save(context.Background(), operLog)
+		ctx := context.WithValue(context.Background(), constants.ContextTraceIDKey, c.GetString(constants.ContextTraceIDKey))
+		go service.OperLogService.Save(ctx, operLog)
 	}
 }

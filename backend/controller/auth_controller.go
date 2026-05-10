@@ -8,6 +8,7 @@ import (
 	"backend/pkg/req_util"
 	"backend/pkg/res_util"
 	"backend/service"
+	"fmt"
 	"strings"
 	"time"
 
@@ -30,7 +31,9 @@ func AuthLogin(c *gin.Context) {
 		return
 	}
 
-	if !loginLimiter.Allow("login:" + req.Username) {
+	clientIP := c.ClientIP()
+	limitKey := fmt.Sprintf("login:%s:%s", clientIP, req.Username)
+	if !loginLimiter.Allow(limitKey) {
 		res_util.Fail(c, res_util.WithMsg("登录过于频繁，请1分钟后再试"))
 		return
 	}

@@ -1,7 +1,7 @@
 <template>
   <n-layout has-sider style="height: 100vh">
     <Sidebar v-model:collapsed="collapsed" />
-    <n-layout>
+    <n-layout style="display: flex; flex-direction: column; overflow: hidden">
       <Navbar @toggle-collapse="collapsed = !collapsed" />
       <AppMain />
     </n-layout>

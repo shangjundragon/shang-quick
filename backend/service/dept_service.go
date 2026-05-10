@@ -2,6 +2,7 @@ package service
 
 import (
 	"backend/model"
+	"backend/pkg/constants"
 	"backend/pkg/global_vars"
 	"context"
 	"errors"
@@ -30,7 +31,9 @@ func (s *deptService) Update(ctx context.Context, dept *model.SysDept) error {
 }
 
 func (s *deptService) Delete(ctx context.Context, id int64) error {
-	allDepts, _ := dbw.New[model.SysDept](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).SelectList()
+	allDepts, _ := dbw.New[model.SysDept](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
+		Eq("del_flag", constants.N).
+		SelectList()
 	descendantIds := s.collectDescendantIds(allDepts, id)
 	if len(descendantIds) > 0 {
 		return errors.New("存在子部门，无法删除")

@@ -16,7 +16,7 @@
           v-permission="['file:upload']"
           :custom-request="handleUpload"
           :show-file-list="false"
-          accept="*"
+          accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
         >
           <n-button type="primary">上传文件</n-button>
         </n-upload>

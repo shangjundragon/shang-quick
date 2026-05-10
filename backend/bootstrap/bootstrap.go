@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"backend/middleware"
 	"backend/pkg/cache"
 	"backend/pkg/constants"
 	"backend/pkg/global_vars"
@@ -29,6 +30,16 @@ func Bootstrap() {
 	checkRequiredFolders()
 	// 3.加载配置文件
 	loadConfigFile()
+	// 3.4.校验 JWT Secret
+	jwtSecret := global_vars.ConfigYml.GetString("Jwt.Secret")
+	if jwtSecret == "" {
+		log.Fatal("JWT Secret 未配置，请在 config.yml 中设置 Jwt.Secret")
+	}
+	if !global_vars.ConfigYml.GetBool("AppDebug") && len(jwtSecret) < 32 {
+		log.Fatalf("生产环境 JWT Secret 长度必须 >= 32 字符，当前长度: %d", len(jwtSecret))
+	}
+	// 3.5.初始化CORS配置
+	middleware.InitCORS()
 	// 4.初始化日志
 	logger.InitLogger()
 	// 5.初始化缓存
@@ -93,6 +104,9 @@ func initDatabase() {
 			traceLogger, _ = logger.GetTraceLogger()
 		} else {
 			traceLogger, _ = req_util.GetTraceLogger(ctx)
+			if traceLogger == nil {
+				traceLogger, _ = logger.GetTraceLogger()
+			}
 		}
 
 		if sqlStr == "" {
@@ -100,7 +114,7 @@ func initDatabase() {
 			return
 		}
 		if len(args) == 0 {
-			traceLogger.Warn("args is empty")
+			traceLogger.Debug("args is empty")
 		}
 
 		// escapeSQLString 转义字符串中的特殊字符

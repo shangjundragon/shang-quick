@@ -32,17 +32,38 @@ func OnlineUserKick(c *gin.Context) {
 
 	currentUsername, _ := c.Get(constants.ContextUsernameKey)
 
-	list, _ := service.OnlineUserService.List(c)
+	list, err := service.OnlineUserService.List(c)
+	if err != nil {
+		res_util.Fail(c, res_util.WithMsg("获取在线用户失败"))
+		return
+	}
 	var targetUser *string
+	var targetUserID int64
 	for _, user := range list {
 		if user.TokenId == req.TokenId {
 			targetUser = &user.Username
+			targetUserID = user.UserId
 			break
 		}
 	}
 
-	if targetUser != nil && *targetUser == currentUsername.(string) {
+	if targetUser == nil {
+		res_util.Fail(c, res_util.WithMsg("用户不在线"))
+		return
+	}
+
+	if *targetUser == currentUsername.(string) {
 		res_util.Fail(c, res_util.WithMsg("不能踢出自己"))
+		return
+	}
+
+	isAdmin, err := service.UserService.IsAdmin(c, targetUserID)
+	if err != nil {
+		res_util.Fail(c, res_util.WithMsg("操作失败"))
+		return
+	}
+	if isAdmin {
+		res_util.Fail(c, res_util.WithMsg("不能踢出超级管理员"))
 		return
 	}
 

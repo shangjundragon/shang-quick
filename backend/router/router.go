@@ -55,13 +55,13 @@ func SetupRouter() *gin.Engine {
 
 			authorized.GET("/operLog/list", controller.OperLogList)
 
-		authorized.GET("/file/list", middleware.Permission("file:list"), controller.FileList)
-		authorized.POST("/file/upload", middleware.OperLog("文件管理", 1), middleware.Permission("file:upload"), controller.FileUpload)
-		authorized.POST("/file/delete", middleware.OperLog("文件管理", 3), middleware.Permission("file:delete"), controller.FileDelete)
-		authorized.GET("/file/config", controller.FileConfig)
+			authorized.GET("/file/list", middleware.Permission("file:list"), controller.FileList)
+			authorized.POST("/file/upload", middleware.Permission("file:upload"), controller.FileUpload)
+			authorized.POST("/file/delete", middleware.OperLog("文件管理", 3), middleware.Permission("file:delete"), controller.FileDelete)
+			authorized.GET("/file/config", controller.FileConfig)
 
-		authorized.GET("/onlineUser/list", middleware.Permission("onlineUser:list"), controller.OnlineUserList)
-		authorized.POST("/onlineUser/kick", middleware.OperLog("在线用户", 3), middleware.Permission("onlineUser:kick"), controller.OnlineUserKick)
+			authorized.GET("/onlineUser/list", middleware.Permission("onlineUser:list"), controller.OnlineUserList)
+			authorized.POST("/onlineUser/kick", middleware.OperLog("在线用户", 3), middleware.Permission("onlineUser:kick"), controller.OnlineUserKick)
 		}
 	}
 

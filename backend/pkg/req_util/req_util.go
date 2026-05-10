@@ -33,8 +33,11 @@ func BindQuery[T any](c *gin.Context) (T, error) {
 }
 
 func GetTraceLogger(c context.Context) (traceLogger *zap.Logger, traceID string) {
-	// 从 Context 中获取带 trace_id 的 logger
-	traceLogger = c.Value(constants.ContextTraceLoggerKey).(*zap.Logger)
-	traceID = c.Value(constants.ContextTraceIDKey).(string)
+	if tl, ok := c.Value(constants.ContextTraceLoggerKey).(*zap.Logger); ok {
+		traceLogger = tl
+	}
+	if tid, ok := c.Value(constants.ContextTraceIDKey).(string); ok {
+		traceID = tid
+	}
 	return traceLogger, traceID
 }

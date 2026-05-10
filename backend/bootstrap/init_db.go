@@ -81,20 +81,35 @@ func splitSQLStatements(sql string) []string {
 func insertInitData() {
 	now := time.Now().UTC().UnixMilli()
 
-	global_vars.Db.Exec(
+	_, err := global_vars.Db.Exec(
 		`INSERT INTO sys_dept (parent_id, dept_name, order_num, status, del_flag, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		0, "总公司", 0, 1, "N", now, now)
+	if err != nil {
+		log.Fatalf("初始化部门失败: %v", err)
+	}
 
-	global_vars.Db.Exec(
+	_, err = global_vars.Db.Exec(
 		`INSERT INTO sys_role (role_name, role_code, status, del_flag, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?)`,
 		"超级管理员", "admin", 1, "N", now, now)
+	if err != nil {
+		log.Fatalf("初始化角色失败: %v", err)
+	}
 
-	hashedPwd, _ := password.Hash("admin123")
-	global_vars.Db.Exec(
+	hashedPwd, err := password.Hash("admin123")
+	if err != nil {
+		log.Fatalf("初始化密码失败: %v", err)
+	}
+	_, err = global_vars.Db.Exec(
 		`INSERT INTO sys_user (id ,username, password, nickname, dept_id, status, del_flag, create_by, create_time, update_by, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		1, "admin", hashedPwd, "管理员", 1, 1, "N", 1, now, 1, now)
+	if err != nil {
+		log.Fatalf("初始化用户失败: %v", err)
+	}
 
-	global_vars.Db.Exec(`INSERT INTO sys_user_role (user_id, role_id) VALUES (1, 1)`)
+	_, err = global_vars.Db.Exec(`INSERT INTO sys_user_role (user_id, role_id) VALUES (1, 1)`)
+	if err != nil {
+		log.Fatalf("初始化用户角色关联失败: %v", err)
+	}
 
 	menus := []struct {
 		parentId  int64
@@ -120,10 +135,16 @@ func insertInitData() {
 
 	menuIds := make([]int64, len(menus))
 	for i, menu := range menus {
-		result, _ := global_vars.Db.Exec(
+		result, err := global_vars.Db.Exec(
 			`INSERT INTO sys_menu (parent_id, menu_name, menu_type, icon, path, component, perm, order_num, status, del_flag, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			menu.parentId, menu.menuName, menu.menuType, menu.icon, menu.path, menu.component, menu.perm, menu.orderNum, 1, "N", now, now)
-		id, _ := result.LastInsertId()
+		if err != nil {
+			log.Fatalf("初始化菜单失败: %v", err)
+		}
+		id, err := result.LastInsertId()
+		if err != nil {
+			log.Fatalf("获取菜单ID失败: %v", err)
+		}
 		menuIds[i] = id
 	}
 
@@ -152,18 +173,30 @@ func insertInitData() {
 	}
 
 	for _, btn := range buttons {
-		result, _ := global_vars.Db.Exec(
+		result, err := global_vars.Db.Exec(
 			`INSERT INTO sys_menu (parent_id, menu_name, menu_type, perm, order_num, status, del_flag, create_time, update_time) VALUES (?, ?, 2, ?, 0, 1, 'N', ?, ?)`,
 			btn.parentId, btn.menuName, btn.perm, now, now)
-		id, _ := result.LastInsertId()
-		global_vars.Db.Exec(
+		if err != nil {
+			log.Fatalf("初始化按钮失败: %v", err)
+		}
+		id, err := result.LastInsertId()
+		if err != nil {
+			log.Fatalf("获取按钮ID失败: %v", err)
+		}
+		_, err = global_vars.Db.Exec(
 			`INSERT INTO sys_role_menu (role_id, menu_id) VALUES (?, ?)`,
 			1, id)
+		if err != nil {
+			log.Fatalf("初始化角色菜单关联失败: %v", err)
+		}
 	}
 
 	for _, menuId := range menuIds {
-		global_vars.Db.Exec(
+		_, err := global_vars.Db.Exec(
 			`INSERT INTO sys_role_menu (role_id, menu_id) VALUES (?, ?)`,
 			1, menuId)
+		if err != nil {
+			log.Fatalf("初始化角色菜单关联失败: %v", err)
+		}
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"backend/pkg/utils"
 	"backend/service"
 	"fmt"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shangjundragon/dbw"
@@ -108,17 +109,28 @@ func UserList(c *gin.Context) {
 	}))
 }
 
+func parseRoleIds(ids []string) []int64 {
+	result := make([]int64, 0, len(ids))
+	for _, s := range ids {
+		id, err := strconv.ParseInt(s, 10, 64)
+		if err == nil {
+			result = append(result, id)
+		}
+	}
+	return result
+}
+
 func UserAdd(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	type AddReq struct {
-		Username string  `json:"username" binding:"required"`
-		Password string  `json:"password" binding:"required"`
-		Nickname string  `json:"nickname"`
-		Phone    string  `json:"phone"`
-		Email    string  `json:"email"`
-		DeptId   int64   `json:"deptId,string"`
-		RoleIds  []int64 `json:"roleIds"`
-		Status   int     `json:"status"`
+		Username string   `json:"username" binding:"required"`
+		Password string   `json:"password" binding:"required"`
+		Nickname string   `json:"nickname" binding:"required"`
+		Phone    string   `json:"phone"`
+		Email    string   `json:"email"`
+		DeptId   int64    `json:"deptId,string"`
+		RoleIds  []string `json:"roleIds"`
+		Status   int      `json:"status"`
 	}
 
 	req, err := req_util.BindJson[AddReq](c)
@@ -129,6 +141,7 @@ func UserAdd(c *gin.Context) {
 	}
 
 	if err := password.ValidatePasswordStrong(req.Password); err != nil {
+		traceLogger.Warn("校验密码健壮性失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg(err.Error()))
 		return
 	}
@@ -144,7 +157,12 @@ func UserAdd(c *gin.Context) {
 		return
 	}
 
-	hashedPwd, _ := password.Hash(req.Password)
+	hashedPwd, err := password.Hash(req.Password)
+	if err != nil {
+		traceLogger.Error("密码处理失败", zap.Error(err))
+		res_util.Fail(c, res_util.WithMsg("密码处理失败"))
+		return
+	}
 	user := &model.SysUser{
 		Username: req.Username,
 		Password: hashedPwd,
@@ -155,7 +173,7 @@ func UserAdd(c *gin.Context) {
 		Status:   req.Status,
 	}
 
-	err = service.UserService.AddWithRoles(c, user, req.RoleIds)
+	err = service.UserService.AddWithRoles(c, user, parseRoleIds(req.RoleIds))
 	if err != nil {
 		traceLogger.Error("新增失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("新增失败"))
@@ -168,13 +186,14 @@ func UserAdd(c *gin.Context) {
 func UserEdit(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	type EditReq struct {
-		Id       int64   `json:"id,string" binding:"required"`
-		Nickname string  `json:"nickname"`
-		Phone    string  `json:"phone"`
-		Email    string  `json:"email"`
-		DeptId   int64   `json:"deptId,string"`
-		RoleIds  []int64 `json:"roleIds"`
-		Status   int     `json:"status"`
+		Id       int64    `json:"id,string" binding:"required"`
+		Username string   `json:"username"`
+		Nickname string   `json:"nickname" binding:"required"`
+		Phone    string   `json:"phone"`
+		Email    string   `json:"email"`
+		DeptId   int64    `json:"deptId,string"`
+		RoleIds  []string `json:"roleIds"`
+		Status   int      `json:"status"`
 	}
 
 	req, err := req_util.BindJson[EditReq](c)
@@ -182,6 +201,27 @@ func UserEdit(c *gin.Context) {
 		traceLogger.Warn("参数错误", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
 		return
+	}
+
+	if req.Username != "" {
+		existingUser, err := service.UserService.GetById(c, req.Id)
+		if err != nil {
+			traceLogger.Error("查询用户失败", zap.Error(err))
+			res_util.Fail(c, res_util.WithMsg("操作失败"))
+			return
+		}
+		if existingUser != nil && existingUser.Username != req.Username {
+			exists, err := service.UserService.CheckUsernameExists(c, req.Username)
+			if err != nil {
+				traceLogger.Error("检查用户名失败", zap.Error(err))
+				res_util.Fail(c, res_util.WithMsg("操作失败"))
+				return
+			}
+			if exists {
+				res_util.Fail(c, res_util.WithMsg("用户名已存在"))
+				return
+			}
+		}
 	}
 
 	user := &model.SysUser{
@@ -192,11 +232,14 @@ func UserEdit(c *gin.Context) {
 		DeptId:   req.DeptId,
 		Status:   req.Status,
 	}
+	if req.Username != "" {
+		user.Username = req.Username
+	}
 
 	updateBy, _ := c.Get(constants.ContextUserIDKey)
 	user.UpdateBy = updateBy.(int64)
 
-	err = service.UserService.UpdateWithRoles(c, user, req.RoleIds)
+	err = service.UserService.UpdateWithRoles(c, user, parseRoleIds(req.RoleIds))
 	if err != nil {
 		traceLogger.Error("编辑失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("编辑失败"))
@@ -217,6 +260,17 @@ func UserChangeStatus(c *gin.Context) {
 	if err != nil {
 		traceLogger.Warn("参数错误", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
+		return
+	}
+
+	isAdmin, err := service.UserService.IsAdmin(c, req.Id)
+	if err != nil {
+		traceLogger.Error("检查用户角色失败", zap.Error(err))
+		res_util.Fail(c, res_util.WithMsg("操作失败"))
+		return
+	}
+	if isAdmin {
+		res_util.Fail(c, res_util.WithMsg("不能修改超级管理员状态"))
 		return
 	}
 
@@ -250,7 +304,24 @@ func UserResetPwd(c *gin.Context) {
 		return
 	}
 
-	hashedPwd, _ := password.Hash("123456")
+	isAdmin, err := service.UserService.IsAdmin(c, req.Id)
+	if err != nil {
+		traceLogger.Error("检查用户角色失败", zap.Error(err))
+		res_util.Fail(c, res_util.WithMsg("操作失败"))
+		return
+	}
+	if isAdmin {
+		res_util.Fail(c, res_util.WithMsg("不能重置超级管理员密码"))
+		return
+	}
+
+	newPwd := password.GenerateRandomPassword(12)
+	hashedPwd, err := password.Hash(newPwd)
+	if err != nil {
+		traceLogger.Error("密码处理失败", zap.Error(err))
+		res_util.Fail(c, res_util.WithMsg("密码处理失败"))
+		return
+	}
 	user := &model.SysUser{
 		Id:       req.Id,
 		Password: hashedPwd,
@@ -263,7 +334,7 @@ func UserResetPwd(c *gin.Context) {
 		return
 	}
 
-	res_util.Success(c)
+	res_util.Success(c, res_util.WithMsg("密码已重置"))
 }
 
 func UserDelete(c *gin.Context) {
@@ -276,6 +347,17 @@ func UserDelete(c *gin.Context) {
 	if err != nil {
 		traceLogger.Warn("参数错误", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("参数错误"))
+		return
+	}
+
+	isAdmin, err := service.UserService.IsAdmin(c, req.Id)
+	if err != nil {
+		traceLogger.Error("检查用户角色失败", zap.Error(err))
+		res_util.Fail(c, res_util.WithMsg("操作失败"))
+		return
+	}
+	if isAdmin {
+		res_util.Fail(c, res_util.WithMsg("不能删除超级管理员"))
 		return
 	}
 

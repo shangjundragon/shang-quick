@@ -1,15 +1,15 @@
-AppDebug: true   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台， debug=false 非调试模式，将写入日志文件
+AppDebug: true   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
 
 Port: ":8084"
 
 Logs:
-  GinLogName: "/storage/logs/gin.log"                  #设置 gin 框架的接口访问日志
-  AppFileLogName: "/storage/logs/app.log"    #设置项目运行时日志文件名，注意该名称不要与上一条重复 ,避免和 gin 框架的日志掺杂一起，造成混乱。
-  TextFormat: "json"                                #记录日志的格式，参数选项：console、json ， console 表示一般的文本格式
-  TimePrecision: "millisecond"                         #记录日志时，相关的时间精度，该参数选项：second  、 millisecond ， 分别表示 秒 和 毫秒 ,默认为毫秒级别
-  MaxSize: 10                                           #每个日志的最大尺寸(以MB为单位）， 超过该值，系统将会自动进行切割
-  MaxBackups: 7                                        #保留旧日志最大个数
-  MaxAge: 15                                           #保留旧日志最大天数
+  GinLogName: "/storage/logs/gin.log"                  # 设置 gin 框架的接口访问日志
+  AppFileLogName: "/storage/logs/app.log"    # 设置项目运行时日志文件名，注意该名称不要与上一条重复，避免和 gin 框架的日志掺杂一起，造成混乱。
+  TextFormat: "json"                                # 记录日志的格式，参数选项：console、json，console 表示一般的文本格式
+  TimePrecision: "millisecond"                         # 记录日志时，相关的时间精度，该参数选项：second、millisecond，分别表示秒和毫秒，默认为毫秒级别
+  MaxSize: 10                                           # 每个日志的最大尺寸（以MB为单位），超过该值，系统将会自动进行切割
+  MaxBackups: 7                                        # 保留旧日志最大个数
+  MaxAge: 15                                           # 保留旧日志最大天数
   Compress: false                                       # 压缩
 
 Db:
@@ -24,7 +24,7 @@ Cache:
   UseRedis: false
 
 CORS:
-  AllowOrigin: "*"
+  AllowOrigins: ["*"]
   AllowCredentials: true
 
 Upload:
@@ -34,4 +34,3 @@ Upload:
   FileUrlPrefix: "http://localhost:8084/uploads"
   AllowedExtensions:
     - "*"
-

@@ -1,11 +1,11 @@
 package service
 
 import (
-	"fmt"
 	"backend/model"
 	"backend/pkg/fileutil"
 	"backend/pkg/global_vars"
 	"context"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -98,7 +98,7 @@ func (s *fileService) Upload(ctx context.Context, originalName string, fileSize 
 	}
 
 	if isImg == 1 {
-		if err := s.compressAndSaveImage(fullPath, fileType); err != nil {
+		if err := s.compressAndSaveImage(fullPath, fileutil.NormalizeContentType(fileType)); err != nil {
 			os.Remove(fullPath)
 			return nil, err
 		}
@@ -150,18 +150,27 @@ func (s *fileService) compressAndSaveImage(fullPath string, fileType string) err
 		quality = 80
 	}
 
-	file, err := os.Create(fullPath)
+	tmpFile, err := os.CreateTemp(filepath.Dir(fullPath), "compress-*")
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	tmpPath := tmpFile.Name()
+	defer os.Remove(tmpPath)
 
+	var encodeErr error
 	switch fileType {
 	case "image/png":
-		return png.Encode(file, img)
+		encodeErr = png.Encode(tmpFile, img)
 	default:
-		return jpeg.Encode(file, img, &jpeg.Options{Quality: quality})
+		encodeErr = jpeg.Encode(tmpFile, img, &jpeg.Options{Quality: quality})
 	}
+	tmpFile.Close()
+
+	if encodeErr != nil {
+		return encodeErr
+	}
+
+	return os.Rename(tmpPath, fullPath)
 }
 
 func (s *fileService) List(ctx context.Context, pageNum, pageSize int, originalName string) ([]model.SysFile, int64, error) {
