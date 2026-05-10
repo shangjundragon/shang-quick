@@ -5,6 +5,8 @@ import (
 	"backend/pkg/cache"
 	"backend/pkg/global_vars"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -145,8 +147,6 @@ func (s *onlineUserService) List(ctx context.Context) ([]*model.OnlineUser, erro
 }
 
 func (s *onlineUserService) extractTokenId(token string) string {
-	if len(token) <= 16 {
-		return token
-	}
-	return token[:16]
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
 }
