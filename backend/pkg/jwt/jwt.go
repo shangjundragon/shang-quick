@@ -8,6 +8,11 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const (
+	Issuer   = "shang-quick"
+	Audience = "api"
+)
+
 type Claims struct {
 	UserID   int64  `json:"user_id,string"`
 	Username string `json:"username"`
@@ -15,12 +20,12 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func getSecret() string {
+func getSecret() (string, error) {
 	secret := global_vars.ConfigYml.GetString("Jwt.Secret")
 	if secret == "" {
-		return "shang-quick-admin-secret-key-2026"
+		return "", errors.New("JWT Secret 未配置")
 	}
-	return secret
+	return secret, nil
 }
 
 func getExpireHours() int {
@@ -32,28 +37,39 @@ func getExpireHours() int {
 }
 
 func GenerateToken(userID int64, username, roleCode string) (string, error) {
+	secret, err := getSecret()
+	if err != nil {
+		return "", err
+	}
+	now := time.Now().UTC()
 	claims := Claims{
 		UserID:   userID,
 		Username: username,
 		RoleCode: roleCode,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Duration(getExpireHours()) * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+			ExpiresAt: jwt.NewNumericDate(now.Add(time.Duration(getExpireHours()) * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(now),
+			Issuer:    Issuer,
+			Audience:  []string{Audience},
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(getSecret()))
+	return token.SignedString([]byte(secret))
 }
 
 func ParseToken(tokenStr string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(getSecret()), nil
-	})
+	secret, err := getSecret()
 	if err != nil {
 		return nil, err
 	}
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	}, jwt.WithIssuer(Issuer), jwt.WithAudience(Audience))
+	if err != nil {
+		return nil, err
+	}
+	if claims, ok := token.Claims.(*Claims); ok {
 		return claims, nil
 	}
-	return nil, errors.New("invalid token")
+	return nil, errors.New("无效的token")
 }
