@@ -2,9 +2,9 @@ package model
 
 type SysMenu struct {
 	Id         int64   `dbw:"primaryKey" json:"id,string"`
-	ParentId   int64   `dbw:"column:parent_id;default:0" json:"parentId,string"`
+	ParentId   int64   `dbw:"column:parent_id;default:0;tableUpdateStrategy:always" json:"parentId,string"`
 	MenuName   string  `dbw:"column:menu_name" json:"menuName"`
-	MenuType   int     `dbw:"column:menu_type" json:"menuType"`
+	MenuType   int     `dbw:"column:menu_type;default:0" json:"menuType"`
 	Icon       *string `dbw:"column:icon" json:"icon"`
 	Path       *string `dbw:"column:path" json:"path"`
 	Component  *string `dbw:"column:component" json:"component"`

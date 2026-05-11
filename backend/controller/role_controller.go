@@ -7,6 +7,7 @@ import (
 	"backend/pkg/utils"
 	"backend/service"
 	"fmt"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -162,7 +163,7 @@ func RoleAssignMenu(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	type AssignReq struct {
 		RoleId  int64   `json:"roleId,string" binding:"required"`
-		MenuIds []int64 `json:"menuIds"`
+		MenuIds []string `json:"menuIds"`
 	}
 
 	req, err := req_util.BindJson[AssignReq](c)
@@ -172,7 +173,13 @@ func RoleAssignMenu(c *gin.Context) {
 		return
 	}
 
-	err = service.RoleService.AssignMenu(c, req.RoleId, req.MenuIds)
+	menuIds := make([]int64, len(req.MenuIds))
+	for i, idStr := range req.MenuIds {
+		id, _ := strconv.ParseInt(idStr, 10, 64)
+		menuIds[i] = id
+	}
+
+	err = service.RoleService.AssignMenu(c, req.RoleId, menuIds)
 	if err != nil {
 		traceLogger.Error("分配菜单失败", zap.Error(err))
 		res_util.Fail(c, res_util.WithMsg("分配失败"))

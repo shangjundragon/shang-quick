@@ -27,7 +27,7 @@ func MenuAdd(c *gin.Context) {
 	type AddReq struct {
 		ParentId  int64  `json:"parentId,string"`
 		MenuName  string `json:"menuName" binding:"required"`
-		MenuType  int    `json:"menuType" binding:"required"`
+		MenuType  int    `json:"menuType"`
 		Icon      string `json:"icon"`
 		Path      string `json:"path"`
 		Component string `json:"component"`
@@ -76,7 +76,7 @@ func MenuEdit(c *gin.Context) {
 		Id        int64  `json:"id,string" binding:"required"`
 		ParentId  int64  `json:"parentId,string"`
 		MenuName  string `json:"menuName" binding:"required"`
-		MenuType  int    `json:"menuType" binding:"required"`
+		MenuType  int    `json:"menuType"`
 		Icon      string `json:"icon"`
 		Path      string `json:"path"`
 		Component string `json:"component"`

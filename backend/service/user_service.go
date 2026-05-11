@@ -230,6 +230,10 @@ func (s *userService) GetUserMenus(ctx context.Context, userID int64) ([]model.S
 			SelectList()
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
 	return menus, nil
 }
 
