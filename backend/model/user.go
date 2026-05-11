@@ -8,8 +8,8 @@ type SysUser struct {
 	Phone      *string `dbw:"column:phone" json:"phone"`
 	Email      *string `dbw:"column:email" json:"email"`
 	Avatar     *string `dbw:"column:avatar" json:"avatar"`
-	DeptId     int64   `dbw:"column:dept_id" json:"deptId,string"`
-	Status     int     `dbw:"column:status;default:1" json:"status"`
+	DeptId     int64   `dbw:"column:dept_id;tableUpdateStrategy:always" json:"deptId,string"`
+	Status     int     `dbw:"column:status;default:1;tableUpdateStrategy:always" json:"status"`
 	DelFlag    string  `dbw:"column:del_flag;tableLogic" json:"delFlag"`
 	CreateBy   int64   `dbw:"column:create_by;createBy" json:"createBy,string"`
 	CreateTime int64   `dbw:"column:create_time;autoCreateTime:milli" json:"createTime,string"`

@@ -139,7 +139,7 @@ function handleAdd() {
   modalTitle.value = '新增部门'
   form.value = {
     id: null,
-  parentId: '0',
+  parentId: 0,
     deptName: '',
     orderNum: 0,
     leader: '',
