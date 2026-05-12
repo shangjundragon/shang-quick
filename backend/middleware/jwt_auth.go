@@ -1,3 +1,4 @@
+// Package middleware 定义 Gin 中间件：CORS、JWT 认证、权限校验、操作日志、链路追踪
 package middleware
 
 import (
@@ -26,6 +27,7 @@ func JWTAuth() gin.HandlerFunc {
 
 		token := parts[1]
 
+		// 检查 Token 是否已被管理员踢下线
 		if service.OnlineUserService.IsBlacklisted(c, token) {
 			res_util.Fail(c, res_util.WithCode(401), res_util.WithMsg("您的会话已被管理员终止"))
 			return
@@ -41,6 +43,7 @@ func JWTAuth() gin.HandlerFunc {
 		c.Set(constants.ContextUsernameKey, claims.Username)
 		c.Set(constants.ContextRoleCodeKey, claims.RoleCode)
 
+		// 异步更新用户最后活跃时间（不阻塞请求）
 		go service.OnlineUserService.UpdateActiveTime(c, token)
 
 		c.Next()

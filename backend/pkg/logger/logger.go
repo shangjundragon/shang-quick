@@ -1,3 +1,4 @@
+// Package logger 提供 Zap 日志的初始化和配置，支持控制台/文件输出和日志轮转
 package logger
 
 import (

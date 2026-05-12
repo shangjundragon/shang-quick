@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// UserList 分页查询用户列表，同时批量查询部门名称和角色名称
 func UserList(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	type ListReq struct {
@@ -47,7 +48,7 @@ func UserList(c *gin.Context) {
 		RoleNames []string `json:"roleNames"`
 	}
 
-	// 批量查询部门名称
+	// 批量查询部门名称和角色名称（避免 N+1 问题）
 	deptIds := make([]any, 0, len(list))
 	for _, user := range list {
 		if user.DeptId > 0 {
@@ -120,6 +121,7 @@ func parseRoleIds(ids []string) []int64 {
 	return result
 }
 
+// UserAdd 新增用户，校验密码强度、用户名唯一性，含角色分配
 func UserAdd(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	type AddReq struct {
@@ -183,6 +185,7 @@ func UserAdd(c *gin.Context) {
 	res_util.Success(c)
 }
 
+// UserEdit 编辑用户，修改用户名时检查唯一性
 func UserEdit(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	type EditReq struct {
@@ -249,6 +252,7 @@ func UserEdit(c *gin.Context) {
 	res_util.Success(c)
 }
 
+// UserChangeStatus 启用/禁用用户，禁止操作超级管理员
 func UserChangeStatus(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	type StatusReq struct {
@@ -291,6 +295,7 @@ func UserChangeStatus(c *gin.Context) {
 	res_util.Success(c)
 }
 
+// UserResetPwd 重置用户密码为随机密码，禁止重置超级管理员
 func UserResetPwd(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	type ResetReq struct {
@@ -337,6 +342,7 @@ func UserResetPwd(c *gin.Context) {
 	res_util.Success(c, res_util.WithMsg("密码已重置"))
 }
 
+// UserDelete 删除用户（逻辑删除），禁止删除超级管理员
 func UserDelete(c *gin.Context) {
 	traceLogger, _ := req_util.GetTraceLogger(c)
 	type DeleteReq struct {

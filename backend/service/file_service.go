@@ -43,6 +43,7 @@ func (s *fileService) isExtensionAllowed(ext string) bool {
 	return false
 }
 
+// Upload 上传文件：先写临时文件，再校验类型，然后压缩图片（如需要），最后移至上传目录
 func (s *fileService) Upload(ctx context.Context, originalName string, fileSize int64, fileType string, reader io.Reader, userID int64) (*model.SysFile, error) {
 	ext := strings.ToLower(filepath.Ext(originalName))
 	if !s.isExtensionAllowed(ext) {
@@ -59,12 +60,13 @@ func (s *fileService) Upload(ctx context.Context, originalName string, fileSize 
 		return nil, err
 	}
 
+	// 先写入临时文件，避免直接污染上传目录
 	tempFile, err := os.CreateTemp("", "upload-*")
 	if err != nil {
 		return nil, err
 	}
 	tempPath := tempFile.Name()
-	defer os.Remove(tempPath)
+	defer os.Remove(tempPath) // 无论成功或失败，清理临时文件
 
 	if _, err := io.Copy(tempFile, reader); err != nil {
 		tempFile.Close()
@@ -77,6 +79,7 @@ func (s *fileService) Upload(ctx context.Context, originalName string, fileSize 
 		isImg = 1
 	}
 
+	// 图片文件检测：比对 Content-Type 和实际文件头，防止类型伪造
 	if isImg == 1 {
 		f, err := os.Open(tempPath)
 		if err != nil {
@@ -125,6 +128,7 @@ func (s *fileService) Upload(ctx context.Context, originalName string, fileSize 
 
 const maxImageDimension = 10000
 
+// compressAndSaveImage 压缩并重写图片（JPEG 压缩质量可配，PNG 仅重编码），通过临时文件+原子重命名保证安全
 func (s *fileService) compressAndSaveImage(fullPath string, fileType string) error {
 	if fileType != "image/jpeg" && fileType != "image/png" {
 		return nil
@@ -185,6 +189,7 @@ func (s *fileService) List(ctx context.Context, pageNum, pageSize int, originalN
 	return list, total, nil
 }
 
+// Delete 删除文件记录并移除物理文件
 func (s *fileService) Delete(ctx context.Context, id int64) error {
 	file, err := s.GetById(ctx, id)
 	if err != nil {
@@ -192,7 +197,7 @@ func (s *fileService) Delete(ctx context.Context, id int64) error {
 	}
 	if file != nil {
 		fullPath := filepath.Join(global_vars.BasePath, "storage", "uploads", strings.TrimPrefix(file.FilePath, "/"))
-		os.Remove(fullPath)
+		os.Remove(fullPath) // 删除物理文件，忽略错误（文件可能已被手动删除）
 	}
 	_, err = dbw.New[model.SysFile](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).DeleteById(id)
 	return err

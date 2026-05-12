@@ -1,3 +1,4 @@
+// Package fileutil 提供文件上传、类型检测、图片压缩和路径处理工具函数
 package fileutil
 
 import (

@@ -1,3 +1,4 @@
+// Package ratelimit 提供基于滑动窗口策略的内存限流器
 package ratelimit
 
 import (
@@ -6,10 +7,11 @@ import (
 )
 
 type entry struct {
-	count    int
-	expireAt time.Time
+	count    int       // 当前窗口内请求计数
+	expireAt time.Time // 窗口过期时间
 }
 
+// RateLimiter 基于滑动窗口策略的内存限流器，带后台 goroutine 清理过期条目
 type RateLimiter struct {
 	mu       sync.RWMutex
 	entries  map[string]*entry

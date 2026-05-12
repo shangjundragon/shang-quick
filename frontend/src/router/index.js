@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { getInfo } from '@/api/auth'
 
+// 路由在编译时静态定义，侧边栏菜单由后端返回的 menus 动态渲染
 const routes = [
   {
     path: '/login',
@@ -16,6 +17,7 @@ const router = createRouter({
   routes
 })
 
+// allRoutes 定义了所有业务路由，在 router 创建后通过 addRoute 动态注册
 export const allRoutes = [
   {
     path: '/',
@@ -98,6 +100,7 @@ allRoutes.forEach(route => {
   router.addRoute(route)
 })
 
+// 未匹配路由重定向到登录页
 router.addRoute({
   path: '/:pathMatch(.*)*',
   name: 'NotFound',
@@ -105,6 +108,7 @@ router.addRoute({
   hidden: true
 })
 
+// 全局路由守卫：未登录跳转登录页，已登录但无 menus 时拉取用户信息
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
 
@@ -118,7 +122,7 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  // 刷新页面后重新获取用户信息
+  // 刷新页面后重新获取用户信息（菜单、权限等）
   if (userStore.menus.length === 0) {
     try {
       const res = await getInfo()

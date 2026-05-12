@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 用于脱敏日志中的密码字段（正则匹配 JSON 中的 password/oldPassword/newPassword）
 var (
 	passwordRe    = regexp.MustCompile(`"password"\s*:\s*"[^"]*"`)
 	oldPasswordRe = regexp.MustCompile(`"oldPassword"\s*:\s*"[^"]*"`)
@@ -46,16 +47,19 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
+// OperLog 操作日志中间件：拦截 POST 请求，记录请求/响应数据、操作人和耗时
 func OperLog(title string, operType int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		startTime := time.Now().UTC().UnixMilli()
 
+		// 拦截请求体（只能读取一次，需重新设置）
 		var requestBody []byte
 		if c.Request.Method == "POST" {
 			requestBody, _ = io.ReadAll(c.Request.Body)
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody))
 		}
 
+		// 用自定义 ResponseWriter 拦截响应数据
 		blw := &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 		c.Writer = blw
 
@@ -73,6 +77,7 @@ func OperLog(title string, operType int) gin.HandlerFunc {
 			status = 0
 		}
 
+		// 脱敏密码字段后异步写入操作日志
 		operLog := &model.SysOperLog{
 			Title:        strPtr(title),
 			OperType:     operType,
@@ -87,6 +92,6 @@ func OperLog(title string, operType int) gin.HandlerFunc {
 		}
 
 		ctx := context.WithValue(context.Background(), constants.ContextTraceIDKey, c.GetString(constants.ContextTraceIDKey))
-		go service.OperLogService.Save(ctx, operLog)
+		go service.OperLogService.Save(ctx, operLog) // 异步写入，不阻塞请求
 	}
 }

@@ -1,3 +1,4 @@
+// Package controller 处理 HTTP 请求，负责参数校验、业务调用和响应返回
 package controller
 
 import (
@@ -16,6 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// loginLimiter 限制登录接口频率：同 IP+用户名 每分钟最多 5 次
 var loginLimiter = ratelimit.New(5, time.Minute)
 
 func AuthLogin(c *gin.Context) {
@@ -55,6 +57,7 @@ func AuthLogin(c *gin.Context) {
 		return
 	}
 
+	// 取第一个角色编码写入 JWT，用于权限中间件快速判断 admin
 	roles, _ := service.UserService.GetUserRoles(c, user.Id)
 	roleCode := ""
 	if len(roles) > 0 {
@@ -77,6 +80,7 @@ func AuthLogin(c *gin.Context) {
 
 	service.OnlineUserService.RecordLogin(c, token, user.Id, user.Username, nickname)
 
+	// 记录在线用户信息（IP、浏览器、操作系统）
 	ipAddr := c.ClientIP()
 	browser, os := parseUserAgent(c.GetHeader("User-Agent"))
 	service.OnlineUserService.SetUserAgent(c, token, ipAddr, browser, os)

@@ -1,3 +1,4 @@
+// Package global_vars 定义全局变量：项目根路径、日志、配置、数据库连接和 dbw 配置
 package global_vars
 
 import (

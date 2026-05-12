@@ -1,3 +1,4 @@
+// Package jwt 提供 JWT Token 的生成和解析，支持自定义 Claims
 package jwt
 
 import (
@@ -13,6 +14,7 @@ const (
 	Audience = "api"
 )
 
+// Claims JWT 自定义声明，包含用户身份和角色信息
 type Claims struct {
 	UserID   int64  `json:"user_id,string"`
 	Username string `json:"username"`

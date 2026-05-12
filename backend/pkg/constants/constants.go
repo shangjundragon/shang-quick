@@ -1,3 +1,4 @@
+// Package constants 定义全局常量和上下文键，保持字符串一致
 package constants
 
 var (

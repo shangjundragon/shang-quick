@@ -1,3 +1,4 @@
+// Package res_util 提供统一 HTTP 响应封装，支持链式 Option 模式
 package res_util
 
 import (
@@ -6,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Response 统一 API 响应格式
 type Response struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`

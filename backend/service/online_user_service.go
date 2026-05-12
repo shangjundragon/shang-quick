@@ -31,6 +31,7 @@ func getBlacklistKey(tokenId string) string {
 	return blacklistPrefix + tokenId
 }
 
+// RecordLogin 记录用户登录：将在线用户信息写入缓存（含 Token 过期时间）
 func (s *onlineUserService) RecordLogin(ctx context.Context, token string, userId int64, username, nickname string) {
 	if cache.GlobalCache == nil {
 		return
@@ -103,6 +104,7 @@ func (s *onlineUserService) IsBlacklisted(ctx context.Context, token string) boo
 	return data != ""
 }
 
+// KickUser 踢下线：将 Token 加入黑名单（保留原过期时间），同时从在线列表移除
 func (s *onlineUserService) KickUser(ctx context.Context, tokenId string) error {
 	if cache.GlobalCache == nil {
 		return fmt.Errorf("缓存未初始化")
@@ -126,6 +128,7 @@ func (s *onlineUserService) KickUser(ctx context.Context, tokenId string) error 
 	return nil
 }
 
+// List 遍历内存缓存获取所有在线用户列表（仅 MemoryCache 支持遍历）
 func (s *onlineUserService) List(ctx context.Context) ([]*model.OnlineUser, error) {
 	if cache.GlobalCache == nil {
 		return []*model.OnlineUser{}, nil
@@ -146,6 +149,7 @@ func (s *onlineUserService) List(ctx context.Context) ([]*model.OnlineUser, erro
 	return result, nil
 }
 
+// extractTokenId 用 SHA256 哈希 Token 作为缓存 Key，避免明文存储 Token
 func (s *onlineUserService) extractTokenId(token string) string {
 	hash := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(hash[:])

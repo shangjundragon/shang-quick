@@ -123,6 +123,7 @@ func FileConfig(c *gin.Context) {
 	}))
 }
 
+// FileAccess 提供文件访问（直接 HTTP 响应文件内容），含路径遍历防护
 func FileAccess(c *gin.Context) {
 	filePath := c.Param("filepath")
 	if filePath == "" {
@@ -148,6 +149,7 @@ func FileAccess(c *gin.Context) {
 		}
 	}
 
+	// 防止路径遍历攻击：解析符号链接后检查路径是否仍在上传目录内
 	uploadsDir := filepath.Join(global_vars.BasePath, "storage", "uploads")
 	fullPath := filepath.Join(uploadsDir, strings.TrimPrefix(filePath, "/"))
 

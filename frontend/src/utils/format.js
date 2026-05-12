@@ -1,3 +1,4 @@
+// 格式化毫秒时间戳为中文本地时间字符串（yyyy/MM/dd HH:mm:ss）
 export function formatTimestamp(timestamp) {
   if (!timestamp) return ''
   const date = new Date(Number(timestamp))

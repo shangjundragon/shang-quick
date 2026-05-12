@@ -29,13 +29,14 @@ func (s *menuService) Update(ctx context.Context, menu *model.SysMenu) error {
 	return err
 }
 
+// Delete 递归删除菜单及其所有子菜单（级联删除）
 func (s *menuService) Delete(ctx context.Context, id int64) error {
 	children, _ := dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("parent_id", id).
 		SelectList()
 
 	for _, child := range children {
-		s.Delete(ctx, child.Id)
+		s.Delete(ctx, child.Id) // 递归删除子菜单
 	}
 
 	roleMenus, _ := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).

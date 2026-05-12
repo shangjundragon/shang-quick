@@ -1,3 +1,4 @@
+// Package main 应用入口，启动 HTTP 服务器并监听优雅退出信号
 package main
 
 import (
@@ -37,7 +38,7 @@ func main() {
 		}
 	}()
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond) // 等待 server goroutine 就绪
 
 	// ✅ 4. 启动成功回调逻辑
 	traceLogger.Info(fmt.Sprintf("✅ 服务器启动成功！ http://localhost%s\n", global_vars.ConfigYml.GetString("Port")))

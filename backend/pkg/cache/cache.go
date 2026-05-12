@@ -1,3 +1,4 @@
+// Package cache 提供缓存抽象接口和内存实现，支持 Redis 切换
 package cache
 
 import (
@@ -7,12 +8,14 @@ import (
 	"time"
 )
 
+// Cache 缓存抽象接口，支持内存和 Redis 两种实现切换
 type Cache interface {
 	Get(ctx context.Context, key string) (string, error)
 	Set(ctx context.Context, key string, value string, expiration time.Duration) error
 	Delete(ctx context.Context, key string) error
 }
 
+// MemoryCache 基于 sync.RWMutex + map 的进程内缓存实现
 type MemoryCache struct {
 	data map[string]cacheItem
 	mu   sync.RWMutex

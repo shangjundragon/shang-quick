@@ -1,3 +1,4 @@
+// Package service 实现业务逻辑层，处理数据编排、事务和缓存
 package service
 
 import (
@@ -20,6 +21,7 @@ var UserService = new(userService)
 
 type userService struct{}
 
+// CheckPermission 检查用户是否拥有指定权限标识（四表联查：user_role → role_menu → menu）
 func (s *userService) CheckPermission(ctx context.Context, userID int64, perm string) (bool, error) {
 	userRoles, err := dbw.New[model.SysUserRole](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("user_id", userID).
@@ -97,6 +99,7 @@ func (s *userService) GetUserRoles(ctx context.Context, userID int64) ([]model.S
 	return roles, nil
 }
 
+// GetUserPermissions 获取用户权限列表，admin 返回所有按钮权限，带 10 分钟缓存
 func (s *userService) GetUserPermissions(ctx context.Context, userID int64) ([]string, error) {
 	cacheKey := fmt.Sprintf("perms:%d", userID)
 	if cache.GlobalCache != nil {
@@ -115,6 +118,7 @@ func (s *userService) GetUserPermissions(ctx context.Context, userID int64) ([]s
 	}
 
 	var perms []string
+	// admin 拥有全部权限（所有 menu_type=2 的按钮权限）
 	for _, role := range roles {
 		if role.RoleCode == "admin" {
 			menus, _ := dbw.New[model.SysMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
@@ -180,6 +184,7 @@ func (s *userService) GetUserPermissions(ctx context.Context, userID int64) ([]s
 	return perms, nil
 }
 
+// GetUserMenus 获取用户可见菜单树，admin 返回全部，普通用户按角色过滤
 func (s *userService) GetUserMenus(ctx context.Context, userID int64) ([]model.SysMenu, error) {
 	roles, err := s.GetUserRoles(ctx, userID)
 	if err != nil {
@@ -286,6 +291,7 @@ func (s *userService) Add(ctx context.Context, user *model.SysUser) error {
 	return err
 }
 
+// AddWithRoles 事务内创建用户并分配角色
 func (s *userService) AddWithRoles(ctx context.Context, user *model.SysUser, roleIds []int64) error {
 	return dbw.ExecuteTx(func(tx *sql.Tx) error {
 		_, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).Insert(user)
@@ -309,6 +315,7 @@ func (s *userService) Update(ctx context.Context, user *model.SysUser) error {
 	return err
 }
 
+// UpdateWithRoles 事务内更新用户并重新分配角色（先删旧关联再插新关联）
 func (s *userService) UpdateWithRoles(ctx context.Context, user *model.SysUser, roleIds []int64) error {
 	err := dbw.ExecuteTx(func(tx *sql.Tx) error {
 		_, err := dbw.New[model.SysUser](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).UpdateById(user)
@@ -375,6 +382,7 @@ func (s *userService) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 	return false, nil
 }
 
+// ClearPermissionCache 清除指定用户的权限缓存
 func (s *userService) ClearPermissionCache(ctx context.Context, userID int64) {
 	cacheKey := fmt.Sprintf("perms:%d", userID)
 	if cache.GlobalCache != nil {
@@ -382,6 +390,7 @@ func (s *userService) ClearPermissionCache(ctx context.Context, userID int64) {
 	}
 }
 
+// ClearAllPermissionCache 清除所有用户的权限缓存（角色/菜单变更时调用）
 func (s *userService) ClearAllPermissionCache(ctx context.Context) {
 	if memCache, ok := cache.GlobalCache.(*cache.MemoryCache); ok {
 		var keysToDelete []string

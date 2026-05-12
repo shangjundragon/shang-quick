@@ -1,3 +1,4 @@
+// Package router 注册所有 API 路由和中间件链，是 API 定义的唯一真实来源
 package router
 
 import (

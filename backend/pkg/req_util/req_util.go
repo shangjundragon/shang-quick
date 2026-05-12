@@ -1,3 +1,4 @@
+// Package req_util 提供请求参数绑定工具，支持泛型 BindJson/BindQuery
 package req_util
 
 import (

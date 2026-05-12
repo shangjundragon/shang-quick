@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { useUserStore } from '@/store/user'
 
+// Axios 实例：baseURL /api，通过 Vite 代理转发到后端
 const service = axios.create({
   baseURL: '/api',
   timeout: 30 * 1000,
@@ -9,6 +10,7 @@ const service = axios.create({
   }
 })
 
+// 请求拦截器：自动注入 Bearer Token
 service.interceptors.request.use(
   async (config) => {
     const userStore = useUserStore()
@@ -22,17 +24,20 @@ service.interceptors.request.use(
   }
 )
 
+// 响应拦截器：统一处理业务状态码（401/403/500 等）
 service.interceptors.response.use(
   async (response) => {
     const { data, config } = response
     const processCode = config.processCode || {}
 
+    // 文件下载类请求透传原始响应
     if (response.request.responseType === 'blob' || data instanceof Blob) {
       return response
     }
 
     const { code, data: resData, message } = data
 
+    // 自定义状态码处理器（通过 config.processCode 传入）
     if (code && code !== 200 && processCode[code]) {
       return processCode[code](data)
     }
@@ -63,6 +68,7 @@ service.interceptors.response.use(
     }
   },
   (error) => {
+    // HTTP 网络层错误处理
     let message
     if (error.response) {
       const { status } = error.response

@@ -111,6 +111,7 @@ func (s *roleService) GetMenuIds(ctx context.Context, roleId int64) ([]int64, er
 	return menuIds, nil
 }
 
+// AssignMenu 重新分配角色的菜单权限（事务内先删后插）
 func (s *roleService) AssignMenu(ctx context.Context, roleId int64, menuIds []int64) error {
 	err := dbw.ExecuteTx(func(tx *sql.Tx) error {
 		_, err := dbw.New[model.SysRoleMenu](dbw.WithConfig(global_vars.DbConfig), dbw.WithTx(tx), dbw.WithContext(ctx)).

@@ -1,3 +1,4 @@
+// Package password 提供 bcrypt 密码哈希、验证和随机密码生成
 package password
 
 import (
@@ -9,6 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// passwordChars 随机密码字符集：小写字母(26)+大写字母(26)+数字(10)+特殊字符(10)
 const passwordChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
 
 func Hash(password string) (string, error) {
@@ -63,6 +65,7 @@ func ValidatePasswordStrong(password string) error {
 	return nil
 }
 
+// GenerateRandomPassword 生成指定长度的随机密码，确保至少包含大写字母、小写字母、数字和特殊字符各一个
 func GenerateRandomPassword(length int) string {
 	if length < 8 {
 		length = 12

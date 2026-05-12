@@ -1,3 +1,4 @@
+// Package bootstrap 负责应用启动流程：配置加载、目录检查、日志初始化、数据库连接和初始化
 package bootstrap
 
 import (

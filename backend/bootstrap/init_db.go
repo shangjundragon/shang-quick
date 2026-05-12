@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// InitDatabase 执行建表 SQL，检查 admin 用户是否存在，不存在则插入初始化数据
 func InitDatabase() {
 	executeSQLFile()
 
@@ -111,6 +112,7 @@ func insertInitData() {
 		log.Fatalf("初始化用户角色关联失败: %v", err)
 	}
 
+	// 内置菜单定义：目录(menuType=0)、菜单(menuType=1)、按钮(menuType=2)
 	menus := []struct {
 		parentId  int64
 		menuName  string
@@ -148,6 +150,7 @@ func insertInitData() {
 		menuIds[i] = id
 	}
 
+	// 按钮级权限（menu_type=2），按父菜单 ID 关联
 	buttons := []struct {
 		parentId int64
 		menuName string

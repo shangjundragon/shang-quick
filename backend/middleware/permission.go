@@ -10,6 +10,7 @@ import (
 
 func Permission(perm string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// admin 角色跳过权限校验，拥有全部权限
 		roleCode, _ := c.Get(constants.ContextRoleCodeKey)
 		if roleCode == constants.RoleCodeAdmin {
 			c.Next()

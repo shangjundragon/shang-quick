@@ -30,7 +30,9 @@ func (s *deptService) Update(ctx context.Context, dept *model.SysDept) error {
 	return err
 }
 
+// Delete 删除部门前检查是否存在子部门或关联用户
 func (s *deptService) Delete(ctx context.Context, id int64) error {
+	// 递归查找所有子孙部门，存在则拒绝删除
 	allDepts, _ := dbw.New[model.SysDept](dbw.WithConfig(global_vars.DbConfig), dbw.WithContext(ctx)).
 		Eq("del_flag", constants.N).
 		SelectList()
