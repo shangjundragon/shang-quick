@@ -14,7 +14,7 @@ Logs:
 
 Db:
   DriverName: "sqlite"
-  Dsn: "data.db"
+  Dsn: "storage/data.db"
 
 Jwt:
   Secret: "shang-quick-admin-secret-key-2026"

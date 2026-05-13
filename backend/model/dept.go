@@ -11,9 +11,11 @@ type SysDept struct {
 	Email    *string `dbw:"column:email" json:"email"`                                                    // 邮箱
 	Status   int     `dbw:"column:status;default:1;tableUpdateStrategy:always" json:"status"`             // 状态：1=启用 0=禁用
 
-	DelFlag    string `dbw:"column:del_flag;tableLogic" json:"delFlag"`                        // 逻辑删除标识
-	CreateTime int64  `dbw:"column:create_time;autoCreateTime:milli" json:"createTime,string"` // 创建时间
-	UpdateTime int64  `dbw:"column:update_time;autoUpdateTime:milli" json:"updateTime,string"` // 更新时间
+	DelFlag    string `dbw:"column:del_flag;tableLogic" json:"delFlag"`                        // 逻辑删除标识：N=未删 Y=已删
+	CreateBy   int64  `dbw:"column:create_by;createBy" json:"createBy,string"`                 // 创建人 ID
+	CreateTime int64  `dbw:"column:create_time;autoCreateTime:milli" json:"createTime,string"` // 创建时间（毫秒时间戳）
+	UpdateBy   int64  `dbw:"column:update_by;updateBy" json:"updateBy,string"`                 // 更新人 ID
+	UpdateTime int64  `dbw:"column:update_time;autoUpdateTime:milli" json:"updateTime,string"` // 更新时间（毫秒时间戳）
 }
 
 func (SysDept) TableName() string {
