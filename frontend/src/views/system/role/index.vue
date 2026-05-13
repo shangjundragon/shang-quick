@@ -25,17 +25,17 @@
     </n-space>
 
     <n-modal v-model:show="showModal" :title="modalTitle" preset="card" style="width: 500px">
-      <n-form :model="form" label-placement="left" label-width="auto">
-        <n-form-item label="角色名称" required>
+      <n-form ref="formRef" :model="form" :rules="rules" label-placement="left" label-width="auto">
+        <n-form-item label="角色名称" path="roleName" required>
           <n-input v-model:value="form.roleName" placeholder="请输入角色名称" />
         </n-form-item>
-        <n-form-item label="角色编码" required>
+        <n-form-item label="角色编码" path="roleCode" required>
           <n-input v-model:value="form.roleCode" placeholder="请输入角色编码" />
         </n-form-item>
-        <n-form-item label="备注">
+        <n-form-item label="备注" path="remark">
           <n-input v-model:value="form.remark" type="textarea" placeholder="请输入备注" />
         </n-form-item>
-        <n-form-item label="状态">
+        <n-form-item label="状态" path="status">
           <n-radio-group v-model:value="form.status">
             <n-radio :value="1">启用</n-radio>
             <n-radio :value="0">禁用</n-radio>
@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
+import { ref, onMounted, h, useTemplateRef } from 'vue'
 import { NButton, NSpace, NPopconfirm } from 'naive-ui'
 import { getRoleList, addRole, updateRole, deleteRole, getRoleMenuIds, assignRoleMenu } from '@/api/role'
 import { getMenuList } from '@/api/menu'
@@ -117,6 +117,7 @@ const showModal = ref(false)
 const modalTitle = ref('')
 const isEdit = ref(false)
 const submitLoading = ref(false)
+const formRef = useTemplateRef('formRef')
 const form = ref({
   id: null,
   roleName: '',
@@ -124,6 +125,11 @@ const form = ref({
   remark: '',
   status: 1
 })
+
+const rules = {
+  roleName: { required: true, message: '请输入角色名称', trigger: 'blur' },
+  roleCode: { required: true, message: '请输入角色编码', trigger: 'blur' }
+}
 
 const showMenuModal = ref(false)
 const menuSubmitLoading = ref(false)
@@ -192,8 +198,9 @@ function handleEdit(row) {
 }
 
 async function handleSubmit() {
-  submitLoading.value = true
   try {
+    await formRef.value?.validate()
+    submitLoading.value = true
     if (isEdit.value) {
       await updateRole(form.value)
     } else {

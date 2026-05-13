@@ -13,8 +13,8 @@
     </n-space>
 
     <n-modal v-model:show="showModal" :title="modalTitle" preset="card" style="width: 500px">
-      <n-form :model="form" label-placement="left" label-width="auto">
-        <n-form-item label="上级部门">
+      <n-form ref="formRef" :model="form" :rules="rules" label-placement="left" label-width="auto">
+        <n-form-item label="上级部门" path="parentId">
           <n-tree-select
             v-model:value="form.parentId"
             :options="treeSelectOptions"
@@ -23,22 +23,22 @@
             :default-value="0"
           />
         </n-form-item>
-        <n-form-item label="部门名称" required>
+        <n-form-item label="部门名称" path="deptName" required>
           <n-input v-model:value="form.deptName" placeholder="请输入部门名称" />
         </n-form-item>
-        <n-form-item label="显示排序">
+        <n-form-item label="显示排序" path="orderNum">
           <n-input-number v-model:value="form.orderNum" :min="0" style="width: 100%" />
         </n-form-item>
-        <n-form-item label="负责人">
+        <n-form-item label="负责人" path="leader">
           <n-input v-model:value="form.leader" placeholder="请输入负责人" />
         </n-form-item>
-        <n-form-item label="联系电话">
+        <n-form-item label="联系电话" path="phone">
           <n-input v-model:value="form.phone" placeholder="请输入联系电话" />
         </n-form-item>
-        <n-form-item label="邮箱">
+        <n-form-item label="邮箱" path="email">
           <n-input v-model:value="form.email" placeholder="请输入邮箱" />
         </n-form-item>
-        <n-form-item label="状态">
+        <n-form-item label="状态" path="status">
           <n-radio-group v-model:value="form.status">
             <n-radio :value="1">启用</n-radio>
             <n-radio :value="0">禁用</n-radio>
@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
+import { ref, onMounted, h, useTemplateRef } from 'vue'
 import { NButton, NSpace, NPopconfirm } from 'naive-ui'
 import { getDeptList, addDept, updateDept, deleteDept } from '@/api/dept'
 
@@ -66,6 +66,7 @@ const showModal = ref(false)
 const modalTitle = ref('')
 const isEdit = ref(false)
 const submitLoading = ref(false)
+const formRef = useTemplateRef('formRef')
 const form = ref({
   id: null,
   parentId: 0,
@@ -76,6 +77,10 @@ const form = ref({
   email: '',
   status: 1
 })
+
+const rules = {
+  deptName: { required: true, message: '请输入部门名称', trigger: 'blur' }
+}
 
 onMounted(() => {
   loadData()
@@ -168,8 +173,9 @@ function handleEdit(row) {
 }
 
 async function handleSubmit() {
-  submitLoading.value = true
   try {
+    await formRef.value?.validate()
+    submitLoading.value = true
     if (isEdit.value) {
       await updateDept(form.value)
     } else {

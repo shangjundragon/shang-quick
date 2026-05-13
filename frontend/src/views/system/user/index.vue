@@ -40,23 +40,23 @@
     </n-space>
 
     <n-modal v-model:show="showModal" :title="modalTitle" preset="card" style="width: 600px">
-      <n-form :model="form" label-placement="left" label-width="auto">
-        <n-form-item label="用户名" required>
+      <n-form ref="formRef" :model="form" :rules="rules" label-placement="left" label-width="auto">
+        <n-form-item label="用户名" path="username" required>
           <n-input v-model:value="form.username" :disabled="isEdit" />
         </n-form-item>
-        <n-form-item v-if="!isEdit" label="密码" required>
+        <n-form-item v-if="!isEdit" label="密码" path="password" required>
           <n-input v-model:value="form.password" type="password" />
         </n-form-item>
-        <n-form-item label="昵称" required>
+        <n-form-item label="昵称" path="nickname" required>
           <n-input v-model:value="form.nickname" />
         </n-form-item>
-        <n-form-item label="手机号">
+        <n-form-item label="手机号" path="phone">
           <n-input v-model:value="form.phone" />
         </n-form-item>
-        <n-form-item label="邮箱">
+        <n-form-item label="邮箱" path="email">
           <n-input v-model:value="form.email" />
         </n-form-item>
-        <n-form-item label="部门">
+        <n-form-item label="部门" path="deptId">
           <n-tree-select
             v-model:value="form.deptId"
             :options="deptTreeOptions"
@@ -64,7 +64,7 @@
             clearable
           />
         </n-form-item>
-        <n-form-item label="角色">
+        <n-form-item label="角色" path="roleIds">
           <n-select
             v-model:value="form.roleIds"
             :options="roleOptions"
@@ -73,7 +73,7 @@
             clearable
           />
         </n-form-item>
-        <n-form-item label="状态">
+        <n-form-item label="状态" path="status">
           <n-radio-group v-model:value="form.status">
             <n-radio :value="1">启用</n-radio>
             <n-radio :value="0">禁用</n-radio>
@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
+import { ref, onMounted, h, useTemplateRef } from 'vue'
 import { NButton, NSpace, NSwitch, NPopconfirm } from 'naive-ui'
 import { getUserList, addUser, updateUser, changeUserStatus, resetUserPwd, deleteUser, getUserRoleIds } from '@/api/user'
 import { getDeptList } from '@/api/dept'
@@ -161,6 +161,7 @@ const showModal = ref(false)
 const modalTitle = ref('')
 const isEdit = ref(false)
 const submitLoading = ref(false)
+const formRef = useTemplateRef('formRef')
 const form = ref({
   id: null,
   username: '',
@@ -172,6 +173,12 @@ const form = ref({
   roleIds: [],
   status: 1
 })
+
+const rules = {
+  username: { required: true, message: '请输入用户名', trigger: 'blur' },
+  password: { required: true, message: '请输入密码', trigger: 'blur' },
+  nickname: { required: true, message: '请输入昵称', trigger: 'blur' }
+}
 
 onMounted(() => {
   loadData()
@@ -286,8 +293,9 @@ async function handleEdit(row) {
 }
 
 async function handleSubmit() {
-  submitLoading.value = true
   try {
+    await formRef.value?.validate()
+    submitLoading.value = true
     if (isEdit.value) {
       await updateUser(form.value)
     } else {

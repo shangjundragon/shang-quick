@@ -26,14 +26,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { login } from '@/api/auth'
 
 const router = useRouter()
 const userStore = useUserStore()
-const formRef = ref(null)
+const formRef = useTemplateRef('formRef')
 const loading = ref(false)
 
 const form = ref({

@@ -14,8 +14,8 @@
     </n-space>
 
     <n-modal v-model:show="showModal" :title="modalTitle" preset="card" style="width: 600px">
-      <n-form :model="form" label-placement="left" label-width="auto">
-        <n-form-item label="上级菜单">
+      <n-form ref="formRef" :model="form" :rules="rules" label-placement="left" label-width="auto">
+        <n-form-item label="上级菜单" path="parentId">
           <n-tree-select
             v-model:value="form.parentId"
             :options="treeSelectOptions"
@@ -24,50 +24,50 @@
             :default-value="0"
           />
         </n-form-item>
-        <n-form-item label="菜单类型">
+        <n-form-item label="菜单类型" path="menuType">
           <n-radio-group v-model:value="form.menuType">
             <n-radio :value="0">目录</n-radio>
             <n-radio :value="1">菜单</n-radio>
             <n-radio :value="2">按钮</n-radio>
           </n-radio-group>
         </n-form-item>
-        <n-form-item label="菜单名称" required>
+        <n-form-item label="菜单名称" path="menuName" required>
           <n-input v-model:value="form.menuName" placeholder="请输入菜单名称" />
         </n-form-item>
-        <n-form-item v-if="form.menuType !== 2" label="图标">
+        <n-form-item v-if="form.menuType !== 2" label="图标" path="icon">
           <n-input v-model:value="form.icon" placeholder="请输入图标名称" />
         </n-form-item>
-        <n-form-item v-if="form.menuType === 1" label="路由地址">
+        <n-form-item v-if="form.menuType === 1" label="路由地址" path="path">
           <n-input v-model:value="form.path" placeholder="请输入路由地址" />
         </n-form-item>
-        <n-form-item v-if="form.menuType === 1" label="组件路径">
+        <n-form-item v-if="form.menuType === 1" label="组件路径" path="component">
           <n-input v-model:value="form.component" placeholder="请输入组件路径" />
         </n-form-item>
-        <n-form-item v-if="form.menuType === 2" label="权限标识">
+        <n-form-item v-if="form.menuType === 2" label="权限标识" path="perm">
           <n-input v-model:value="form.perm" placeholder="例如：user:list" />
         </n-form-item>
-        <n-form-item label="显示排序">
+        <n-form-item label="显示排序" path="orderNum">
           <n-input-number v-model:value="form.orderNum" :min="0" style="width: 100%" />
         </n-form-item>
-        <n-form-item v-if="form.menuType === 1" label="是否外链">
+        <n-form-item v-if="form.menuType === 1" label="是否外链" path="isFrame">
           <n-radio-group v-model:value="form.isFrame">
             <n-radio :value="0">否</n-radio>
             <n-radio :value="1">是</n-radio>
           </n-radio-group>
         </n-form-item>
-        <n-form-item v-if="form.menuType === 1" label="是否缓存">
+        <n-form-item v-if="form.menuType === 1" label="是否缓存" path="isCache">
           <n-radio-group v-model:value="form.isCache">
             <n-radio :value="0">不缓存</n-radio>
             <n-radio :value="1">缓存</n-radio>
           </n-radio-group>
         </n-form-item>
-        <n-form-item v-if="form.menuType !== 2" label="是否可见">
+        <n-form-item v-if="form.menuType !== 2" label="是否可见" path="isVisible">
           <n-radio-group v-model:value="form.isVisible">
             <n-radio :value="1">显示</n-radio>
             <n-radio :value="0">隐藏</n-radio>
           </n-radio-group>
         </n-form-item>
-        <n-form-item label="状态">
+        <n-form-item label="状态" path="status">
           <n-radio-group v-model:value="form.status">
             <n-radio :value="1">启用</n-radio>
             <n-radio :value="0">禁用</n-radio>
@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
+import { ref, onMounted, h, useTemplateRef } from 'vue'
 import { NButton, NSpace, NPopconfirm } from 'naive-ui'
 import { getMenuList, addMenu, updateMenu, deleteMenu } from '@/api/menu'
 
@@ -96,6 +96,7 @@ const showModal = ref(false)
 const modalTitle = ref('')
 const isEdit = ref(false)
 const submitLoading = ref(false)
+const formRef = useTemplateRef('formRef')
 const form = ref({
   id: null,
   parentId: 0,
@@ -111,6 +112,10 @@ const form = ref({
   isVisible: 1,
   status: 1
 })
+
+const rules = {
+  menuName: { required: true, message: '请输入菜单名称', trigger: 'blur' }
+}
 
 onMounted(() => {
   loadData()
@@ -213,8 +218,9 @@ function handleEdit(row) {
 }
 
 async function handleSubmit() {
-  submitLoading.value = true
   try {
+    await formRef.value?.validate()
+    submitLoading.value = true
     if (isEdit.value) {
       await updateMenu(form.value)
     } else {
